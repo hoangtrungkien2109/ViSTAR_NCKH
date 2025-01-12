@@ -94,6 +94,7 @@ def add_StreamingServicer_to_server(servicer, server):
                     response_serializer=streaming__pb2.PushTextResponse.SerializeToString,
             ),
             'PopText': grpc.unary_stream_rpc_method_handler(
+            'PopText': grpc.unary_stream_rpc_method_handler(
                     servicer.PopText,
                     request_deserializer=streaming__pb2.PopTextRequest.FromString,
                     response_serializer=streaming__pb2.PopTextResponse.SerializeToString,
@@ -104,6 +105,7 @@ def add_StreamingServicer_to_server(servicer, server):
                     response_serializer=streaming__pb2.PushFrameResponse.SerializeToString,
             ),
             'PopFrame': grpc.unary_stream_rpc_method_handler(
+            'PopFrame': grpc.unary_stream_rpc_method_handler(
                     servicer.PopFrame,
                     request_deserializer=streaming__pb2.PopFrameRequest.FromString,
                     response_serializer=streaming__pb2.PopFrameResponse.SerializeToString,
@@ -113,6 +115,7 @@ def add_StreamingServicer_to_server(servicer, server):
                     request_deserializer=streaming__pb2.PushImageRequest.FromString,
                     response_serializer=streaming__pb2.PushImageResponse.SerializeToString,
             ),
+            'PopImage': grpc.unary_stream_rpc_method_handler(
             'PopImage': grpc.unary_stream_rpc_method_handler(
                     servicer.PopImage,
                     request_deserializer=streaming__pb2.PopImageRequest.FromString,
