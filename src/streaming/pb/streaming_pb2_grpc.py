@@ -3,7 +3,7 @@
 import grpc
 import warnings
 
-import src.streaming.pb.streaming_pb2 as streaming__pb2
+import streaming_pb2 as streaming__pb2
 
 GRPC_GENERATED_VERSION = '1.64.1'
 GRPC_VERSION = grpc.__version__
@@ -44,7 +44,7 @@ class StreamingStub(object):
                 request_serializer=streaming__pb2.PushTextRequest.SerializeToString,
                 response_deserializer=streaming__pb2.PushTextResponse.FromString,
                 _registered_method=True)
-        self.PopText = channel.unary_unary(
+        self.PopText = channel.unary_stream(
                 '/streaming_services.Streaming/PopText',
                 request_serializer=streaming__pb2.PopTextRequest.SerializeToString,
                 response_deserializer=streaming__pb2.PopTextResponse.FromString,
@@ -54,7 +54,7 @@ class StreamingStub(object):
                 request_serializer=streaming__pb2.PushFrameRequest.SerializeToString,
                 response_deserializer=streaming__pb2.PushFrameResponse.FromString,
                 _registered_method=True)
-        self.PopFrame = channel.unary_unary(
+        self.PopFrame = channel.unary_stream(
                 '/streaming_services.Streaming/PopFrame',
                 request_serializer=streaming__pb2.PopFrameRequest.SerializeToString,
                 response_deserializer=streaming__pb2.PopFrameResponse.FromString,
@@ -64,7 +64,7 @@ class StreamingStub(object):
                 request_serializer=streaming__pb2.PushImageRequest.SerializeToString,
                 response_deserializer=streaming__pb2.PushImageResponse.FromString,
                 _registered_method=True)
-        self.PopImage = channel.unary_unary(
+        self.PopImage = channel.unary_stream(
                 '/streaming_services.Streaming/PopImage',
                 request_serializer=streaming__pb2.PopImageRequest.SerializeToString,
                 response_deserializer=streaming__pb2.PopImageResponse.FromString,
@@ -118,7 +118,7 @@ def add_StreamingServicer_to_server(servicer, server):
                     request_deserializer=streaming__pb2.PushTextRequest.FromString,
                     response_serializer=streaming__pb2.PushTextResponse.SerializeToString,
             ),
-            'PopText': grpc.unary_unary_rpc_method_handler(
+            'PopText': grpc.unary_stream_rpc_method_handler(
                     servicer.PopText,
                     request_deserializer=streaming__pb2.PopTextRequest.FromString,
                     response_serializer=streaming__pb2.PopTextResponse.SerializeToString,
@@ -128,7 +128,7 @@ def add_StreamingServicer_to_server(servicer, server):
                     request_deserializer=streaming__pb2.PushFrameRequest.FromString,
                     response_serializer=streaming__pb2.PushFrameResponse.SerializeToString,
             ),
-            'PopFrame': grpc.unary_unary_rpc_method_handler(
+            'PopFrame': grpc.unary_stream_rpc_method_handler(
                     servicer.PopFrame,
                     request_deserializer=streaming__pb2.PopFrameRequest.FromString,
                     response_serializer=streaming__pb2.PopFrameResponse.SerializeToString,
@@ -138,7 +138,7 @@ def add_StreamingServicer_to_server(servicer, server):
                     request_deserializer=streaming__pb2.PushImageRequest.FromString,
                     response_serializer=streaming__pb2.PushImageResponse.SerializeToString,
             ),
-            'PopImage': grpc.unary_unary_rpc_method_handler(
+            'PopImage': grpc.unary_stream_rpc_method_handler(
                     servicer.PopImage,
                     request_deserializer=streaming__pb2.PopImageRequest.FromString,
                     response_serializer=streaming__pb2.PopImageResponse.SerializeToString,
@@ -192,7 +192,7 @@ class Streaming(object):
             wait_for_ready=None,
             timeout=None,
             metadata=None):
-        return grpc.experimental.unary_unary(
+        return grpc.experimental.unary_stream(
             request,
             target,
             '/streaming_services.Streaming/PopText',
@@ -246,7 +246,7 @@ class Streaming(object):
             wait_for_ready=None,
             timeout=None,
             metadata=None):
-        return grpc.experimental.unary_unary(
+        return grpc.experimental.unary_stream(
             request,
             target,
             '/streaming_services.Streaming/PopFrame',
@@ -300,7 +300,7 @@ class Streaming(object):
             wait_for_ready=None,
             timeout=None,
             metadata=None):
-        return grpc.experimental.unary_unary(
+        return grpc.experimental.unary_stream(
             request,
             target,
             '/streaming_services.Streaming/PopImage',
