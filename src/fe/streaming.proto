@@ -1,0 +1,74 @@
+syntax = "proto3";
+
+package streaming_services;
+
+message PushTextRequest {
+  string text = 1;
+  string time_stamp = 2;
+}
+
+message PushTextResponse {
+  string request_status = 1;
+}
+
+message PopTextRequest {
+  string time_stamp = 1;
+}
+
+message PopTextResponse {
+  string text = 1;
+  string request_status = 2;
+}
+
+message MatrixRow {
+  repeated float elements = 1;
+}
+
+message Matrix {
+  repeated MatrixRow rows = 1;
+}
+
+message PushFrameRequest {
+  Matrix frame = 1;
+  string time_stamp = 2;
+}
+
+message PushFrameResponse {
+  string request_status = 1;
+}
+
+message PopFrameRequest {
+  string time_stamp = 1;
+}
+
+message PopFrameResponse {
+  Matrix frame = 1;
+  string request_status = 2;
+}
+
+message PushImageRequest {
+  string text = 1;
+  string time_stamp = 2;
+}
+
+message PushImageResponse {
+  string request_status = 1;
+}
+
+message PopImageRequest {
+  string time_stamp = 1;
+}
+
+message PopImageResponse {
+  string text = 1;
+  string request_status = 2;
+}
+
+service Streaming {
+  rpc PushText(PushTextRequest) returns (PushTextResponse) {}
+  rpc PopText(PopTextRequest) returns (stream PopTextResponse) {}
+  rpc PushFrame(PushFrameRequest) returns (PushFrameResponse) {}
+  rpc PopFrame(PopFrameRequest) returns (stream PopFrameResponse) {}
+  rpc PushImage(PushImageRequest) returns (PushImageResponse) {}
+  rpc PopImage(PopImageRequest) returns (stream PopImageResponse) {}
+}
