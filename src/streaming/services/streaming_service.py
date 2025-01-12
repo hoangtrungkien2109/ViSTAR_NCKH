@@ -1,12 +1,18 @@
 import threading
 from queue import Queue
 from loguru import logger
+import os
+
+from dotenv import load_dotenv
 from grpc import StatusCode
 from grpc_interceptor.exceptions import GrpcException
 
 import src.streaming.pb.streaming_pb2 as streaming_pb2
 import src.streaming.pb.streaming_pb2_grpc as streaming_pb2_grpc
 import time
+
+load_dotenv(override=True)
+DELAY_TIME = float(os.getenv("DELAY_TIME"))
 
 class StreamingBaseService(streaming_pb2_grpc.StreamingServicer):
     _instance = None
@@ -38,10 +44,10 @@ class StreamingBaseService(streaming_pb2_grpc.StreamingServicer):
     def PopText(self, request, context):
         while True:
             if self.text_queue.empty():
-                yield streaming_pb2.PopTextResponse(request_status="Success", text="Empty")
+                yield streaming_pb2.PopTextResponse(request_status="Empty", text=None)
             else:
                 yield streaming_pb2.PopTextResponse(request_status="Success", text=self.text_queue.get())
-            time.sleep(1)
+            time.sleep(DELAY_TIME)
 
     def PushFrame(self, request, context):
         try:
@@ -53,24 +59,30 @@ class StreamingBaseService(streaming_pb2_grpc.StreamingServicer):
     def PopFrame(self, request, context):
         while True:
             if self.frame_queue.empty():
-                # raise GrpcException(status_code=StatusCode.NOT_FOUND, details="No frame available in the queue.")
-                
-                yield streaming_pb2.PopFrameResponse(request_status="Success", frame=None)
+                # frame_matrix = streaming_pb2.Matrix(
+                #     rows=[
+                #         streaming_pb2.MatrixRow(elements=[10.0, 20.0]),  # First row
+                #         streaming_pb2.MatrixRow(elements=[30.0, 40.0])   # Second row
+                #     ]
+                # )
+                yield streaming_pb2.PopFrameResponse(request_status="Empty", frame=None)
             else:
                 frame = self.frame_queue.get()
                 yield streaming_pb2.PopFrameResponse(request_status="Success", frame=frame)
-            time.sleep(1)
-            
+            time.sleep(DELAY_TIME)
 
     def PushImage(self, request, context):
         try:
-            self.image_queue.put(request.image_base64)
+            self.image_queue.put(request.text)
             return streaming_pb2.PushImageResponse(request_status="Success")
         except Exception as e:
             raise GrpcException(status_code=StatusCode.INTERNAL, details=str(e)) from e
 
     def PopImage(self, request, context):
-        if self.image_queue.empty():
-            raise GrpcException(status_code=StatusCode.NOT_FOUND, details="No image available in the queue.")
-        image = self.image_queue.get()
-        return streaming_pb2.PopImageResponse(request_status="Success", text=image)
+        while True:
+            if self.image_queue.empty():
+                yield streaming_pb2.PopImageResponse(request_status="Empty", text=None)
+            else:
+                image = self.image_queue.get()
+                yield streaming_pb2.PopImageResponse(request_status="Success", text=image)
+            time.sleep(DELAY_TIME)

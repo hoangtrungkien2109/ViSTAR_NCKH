@@ -10,10 +10,9 @@ def run():
 
         for response in pop_text_response:
             logger.info(f"Poped text from server: {response.text}")
-            
+
             logger.info("Processing text...")
-            logger.info("Convert into frame")
-            
+
              # Construct Matrix with rows and elements
             frame_matrix = streaming_pb2.Matrix(
                 rows=[
@@ -23,11 +22,7 @@ def run():
             )
             if response.text == "add frame":
                 push_frame_response = stub.PushFrame(streaming_pb2.PushFrameRequest(frame=frame_matrix))
-                logger.info(push_frame_response.request_status)
-            
-            
-        
-            
+                logger.info(f"Push frame status: {push_frame_response.request_status}")
+
 if __name__ == "__main__":
     run()
-
