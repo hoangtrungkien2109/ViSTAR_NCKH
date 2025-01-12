@@ -66,9 +66,9 @@ message PopImageResponse {
 
 service Streaming {
   rpc PushText(PushTextRequest) returns (PushTextResponse) {}
-  rpc PopText(PopTextRequest) returns (PopTextResponse) {}
+  rpc PopText(PopTextRequest) returns (stream PopTextResponse) {}
   rpc PushFrame(PushFrameRequest) returns (PushFrameResponse) {}
-  rpc PopFrame(PopFrameRequest) returns (PopFrameResponse) {}
+  rpc PopFrame(PopFrameRequest) returns (stream PopFrameResponse) {}
   rpc PushImage(PushImageRequest) returns (PushImageResponse) {}
-  rpc PopImage(PopImageRequest) returns (PopImageResponse) {}
+  rpc PopImage(PopImageRequest) returns (stream PopImageResponse) {}
 }
