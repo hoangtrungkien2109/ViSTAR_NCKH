@@ -7,3 +7,9 @@ ENV/
 
 # Data
 data/
+
+# Cache
+__pycache__/
+
+# Testing
+unit_test.py
