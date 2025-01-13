@@ -9,20 +9,26 @@ def run():
         pop_text_response = stub.PopText(streaming_pb2.PopTextRequest(time_stamp=""))
 
         for response in pop_text_response:
-            logger.info(f"Poped text from server: {response.text}")
-
-            logger.info("Processing text...")
-
-             # Construct Matrix with rows and elements
-            frame_matrix = streaming_pb2.Matrix(
-                rows=[
-                    streaming_pb2.MatrixRow(elements=[1.0, 2.0]),  # First row
-                    streaming_pb2.MatrixRow(elements=[3.0, 4.0])   # Second row
-                ]
-            )
-            if response.text == "add frame":
-                push_frame_response = stub.PushFrame(streaming_pb2.PushFrameRequest(frame=frame_matrix))
-                logger.info(f"Push frame status: {push_frame_response.request_status}")
-
+            if response.request_status == "Empty":
+                logger.warning("Waiting...")
+            else:
+                logger.info(f"Poped text from server: {response.text}")
+                
+                logger.info("Processing text...")
+                logger.info("Convert into frame")
+                
+                # Construct Matrix with rows and elements
+                frame_matrix = streaming_pb2.Matrix(
+                    rows=[
+                        streaming_pb2.MatrixRow(elements=[1.0, 2.0]),  # First row
+                        streaming_pb2.MatrixRow(elements=[3.0, 4.0])   # Second row
+                    ]
+                )
+                if response.text == "add frame":
+                    push_frame_response = stub.PushFrame(streaming_pb2.PushFrameRequest(frame=frame_matrix))
+                    logger.info(push_frame_response.request_status)
+                
+        
+            
 if __name__ == "__main__":
     run()
