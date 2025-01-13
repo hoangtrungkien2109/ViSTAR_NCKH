@@ -21,12 +21,18 @@ def run():
         pop_frame_response = stub.PopFrame(streaming_pb2.PopFrameRequest(time_stamp=""))
 
         for response in pop_frame_response:
-            logger.info(f"Poped frame: {response.frame}")
-            logger.info(f"Status: {response.request_status}")
-            logger.info("Processing frame...")
-            if response.request_status == "Success":
-                base64_image = encode_jfif_to_base64("src\\ai\\services\\frame2video_services\\images.jfif")
-                push_image_response = stub.PushImage(streaming_pb2.PushImageRequest(text=base64_image))
+            if response.request_status == "Empty":
+                logger.warning("Waiting...")
+            else:
+                logger.info(f"Poped frame: {response.frame}")
+                logger.info(f"Status: {response.request_status}")
+                logger.info("Processing frame...")
+                if response.request_status == "Success":
+                    base64_image = encode_jfif_to_base64("src\\ai\\services\\frame2video_services\\images.jfif")
+                    push_image_response = stub.PushImage(streaming_pb2.PushImageRequest(text=base64_image))
+                
+            
+            
 
 
 if __name__ == "__main__":
