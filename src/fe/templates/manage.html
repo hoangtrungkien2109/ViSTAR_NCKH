@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% block title %}Manage My Data{% endblock %}
+{% block content %}
+<div class="max-w-6xl mx-auto">
+    <div class="card">
+        <div class="card-header flex justify-between items-center">
+            <h2 class="text-xl font-bold">Manage My Data</h2>
+            <a href="/data" class="btn btn-primary">Capture New Data</a>
+        </div>
+        <div class="card-body">
+            <p class="text-gray-600 mb-4">Below is a list of your captured data. You can edit or delete if you own it or are admin.</p>
+
+            <div class="overflow-x-auto">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Word</th>
+                            <th>NPY File</th>
+                            <th class="text-center">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for row in data_rows %}
+                        <tr>
+                            <td>{{ row.id }}</td>
+                            <td>{{ row.word }}</td>
+                            <td>{{ row.npy_file }}</td>
+                            <td>
+                                <div class="flex justify-center space-x-2">
+                                    <form action="/manage/edit/{{ row.id }}" method="get" class="inline">
+                                        <button type="submit" class="btn btn-secondary">Edit</button>
+                                    </form>
+                                    <form action="/manage/delete/{{ row.id }}" method="post" class="inline">
+                                        <button type="submit" 
+                                                class="btn btn-danger"
+                                                onclick="return confirm('Are you sure you want to delete this record?');">
+                                            Delete
+                                        </button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

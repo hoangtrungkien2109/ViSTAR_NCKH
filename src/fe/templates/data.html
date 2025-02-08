@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% block title %}Capture Keypoints{% endblock %}
+{% block content %}
+<div class="max-w-4xl mx-auto">
+    <div class="card">
+        <div class="card-header">
+            <h2 class="text-xl font-bold">Capture Keypoints Demo</h2>
+        </div>
+        <div class="card-body">
+            <!-- Capture Controls -->
+            <div class="flex space-x-4 mb-6">
+                <form action="/capture/start" method="post" class="flex-1">
+                    <div class="flex space-x-2">
+                        <div class="flex-1">
+                            <label class="form-label" for="word">Word:</label>
+                            <input type="text" name="word" id="word" value="hello" class="form-input" required>
+                        </div>
+                        <button type="submit" class="btn btn-primary self-end">Start Capture</button>
+                    </div>
+                </form>
+                
+                <form action="/capture/stop" method="post">
+                    <button type="submit" class="btn btn-secondary self-end">Stop Capture</button>
+                </form>
+            </div>
+
+            <!-- Video Feed -->
+            <div class="video-container">
+                <img src="/video_feed" class="video-feed" alt="Live video feed">
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
