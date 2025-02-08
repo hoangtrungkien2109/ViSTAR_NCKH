@@ -4,3 +4,6 @@ channels==4.0.0
 grpcio==1.60.0
 grpcio-tools==1.60.0
 protobuf==4.25.0
+passlib==1.7.4
+mediapipe==0.10.21
+bcrypt==4.2.1
