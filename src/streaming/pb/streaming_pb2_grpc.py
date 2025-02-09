@@ -3,7 +3,7 @@
 import grpc
 import warnings
 
-import src.streaming.pb.streaming_pb2 as streaming__pb2
+import streaming_pb2 as streaming__pb2
 
 GRPC_GENERATED_VERSION = '1.64.1'
 GRPC_VERSION = grpc.__version__
