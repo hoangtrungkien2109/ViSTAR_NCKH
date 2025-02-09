@@ -794,3 +794,7 @@ def capture_stop(db: Session = Depends(get_db)):
     captured_keypoints = []
 
     return {"status": "capturing stopped", "saved_file": filename, "word": current_word}
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(app, host="127.0.0.1", port=8000)
