@@ -58,18 +58,9 @@ class StreamingBaseService(streaming_pb2_grpc.StreamingServicer):
 
     def PopFrame(self, request, context):
         while True:
-            if self.frame_queue.empty():
-                # frame_matrix = streaming_pb2.Matrix(
-                #     rows=[
-                #         streaming_pb2.MatrixRow(elements=[10.0, 20.0]),  # First row
-                #         streaming_pb2.MatrixRow(elements=[30.0, 40.0])   # Second row
-                #     ]
-                # )
-                yield streaming_pb2.PopFrameResponse(request_status="Empty", frame=None)
-            else:
-                frame = self.frame_queue.get()
-                yield streaming_pb2.PopFrameResponse(request_status="Success", frame=frame)
-            time.sleep(DELAY_TIME)
+            if not self.frame_queue.empty():
+                logger.info("Khong empty")
+                yield streaming_pb2.PopFrameResponse(request_status="Success", frame=self.frame_queue.get())
 
     def PushImage(self, request, context):
         try:
