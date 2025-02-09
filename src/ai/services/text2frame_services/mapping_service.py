@@ -37,12 +37,12 @@ def remove_accents(old: str):
 
 class SimilaritySentence():
     """Class for Elastic Search"""
-    _instance = None
+    # _instance = None
 
-    def __new__(cls, *args, **kwargs) -> None:
-        if cls._instance is None:
-            cls._instance = super(SimilaritySentence, cls).__new__(cls, *args, **kwargs)
-        return cls._instance
+    # def __new__(cls, *args, **kwargs) -> None:
+    #     if cls._instance is None:
+    #         cls._instance = super(SimilaritySentence, cls).__new__(cls, *args, **kwargs)
+    #     return cls._instance
 
     def __init__(self, default_dict_path: str = "character_dict.json"):
         self.es: ESEngine = ESEngine()
@@ -69,8 +69,11 @@ class SimilaritySentence():
             current_word = self.word_list.get()
             searched_result = self.es.search(word=current_word)
             # searched_word = searched_result[0]["_source"]["word"]
-            frames = self.es.decode_frame(searched_result[0]["_source"]["frame"])
-            return frames
+            if len(searched_result) > 0:
+                frames = self.es.decode_frame(searched_result[0]["_source"]["frame"])
+                return frames
+            else:
+                return self.default_frame["default"]
         else:
             return self.default_frame["default"]
 
