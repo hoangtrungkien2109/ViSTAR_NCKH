@@ -28,8 +28,12 @@ message Matrix {
   repeated MatrixRow rows = 1;
 }
 
+message MatrixList {
+  repeated Matrix matrix = 1;
+}
+
 message PushFrameRequest {
-  Matrix frame = 1;
+  MatrixList frame = 1;
   string time_stamp = 2;
 }
 
@@ -42,7 +46,7 @@ message PopFrameRequest {
 }
 
 message PopFrameResponse {
-  Matrix frame = 1;
+  MatrixList frame = 1;
   string request_status = 2;
 }
 

@@ -7,9 +7,13 @@ ENV/
 
 # Data
 data/
+*.csv
+*.json
 
 # Cache
 __pycache__/
 
 # Testing
 unit_test.py
+*_temp.py
+*copy.py
