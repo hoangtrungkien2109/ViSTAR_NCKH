@@ -1,4 +1,13 @@
 # requirements.txt
+django
+channels
+grpcio
+grpcio-tools
+protobuf
+streamlit
+loguru
+python-dotenv
+grpc_interceptor
 django==5.0
 channels==4.0.0
 grpcio==1.60.0

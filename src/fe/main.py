@@ -1,4 +1,5 @@
 import streamlit as st
+import streamlit.components.v1 as components
 import grpc
 import io
 import base64
@@ -41,6 +42,68 @@ def decode_base64_image(base64_string):
     except Exception as e:
         st.error(f"Failed to decode image: {e}")
         return None
+    
+
+def render_speech_to_text():
+    speech_to_text_code = """
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <title>Speech to Text</title>
+    </head>
+    <body>
+        <button id="start-btn" style="padding: 10px 20px; font-size: 16px;">🎤 Start Listening</button>
+        <p id="status" style="margin-top: 20px;">Press the button and speak...</p>
+        <textarea id="transcript" rows="4" style="width: 100%; margin-top: 20px;"></textarea>
+        <script>
+            const startBtn = document.getElementById("start-btn");
+            const status = document.getElementById("status");
+            const transcriptTextarea = document.getElementById("transcript");
+
+            if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+                const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+                const recognition = new SpeechRecognition();
+
+                recognition.lang = 'vi-VN'; // Đặt ngôn ngữ nhận diện là tiếng Việt
+                recognition.continuous = false;
+                recognition.interimResults = true;
+
+                startBtn.addEventListener('click', () => {
+                    recognition.start();
+                });
+
+                recognition.onstart = () => {
+                    status.innerText = "Listening...";
+                    startBtn.disabled = true;
+                };
+
+                recognition.onresult = (event) => {
+                    const transcript = event.results[0][0].transcript;
+                    transcriptTextarea.value = transcript; // Hiển thị kết quả trong textarea
+                    status.innerText = "Speech captured!";
+                    // Truyền giá trị qua Streamlit (gửi transcript về Python)
+                    window.parent.postMessage({ transcript: transcript }, "*");
+                };
+
+                recognition.onerror = (event) => {
+                    status.innerText = `Error: ${event.error}`;
+                    startBtn.disabled = false;
+                };
+
+                recognition.onend = () => {
+                    status.innerText = "Press the button and speak...";
+                    startBtn.disabled = false;
+                };
+            } else {
+                status.innerText = "Your browser does not support Web Speech API.";
+                startBtn.disabled = true;
+            }
+        </script>
+    </body>
+    </html>
+    """
+    return speech_to_text_code
+
 
 def main():
     st.title("Streaming Text Service")
@@ -64,10 +127,11 @@ def main():
     # Push Text Tab
     with tab1:
         st.header("Push Text")
+        components.html(render_speech_to_text(), height=400)
         text_input = st.text_area("Enter your text:", height=100)
         
         if st.button("Send Text"):
-            if text_input.strip():
+            if text_input and text_input.strip():
                 status, timestamp = push_text(stub, text_input)
                 
                 if "Error" not in status:
