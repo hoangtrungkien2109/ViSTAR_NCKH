@@ -128,6 +128,7 @@ def main():
     with tab1:
         st.header("Push Text")
         components.html(render_speech_to_text(), height=400)
+        
         text_input = st.text_area("Enter your text:", height=100)
         
         if st.button("Send Text"):
