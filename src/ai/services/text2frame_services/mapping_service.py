@@ -10,13 +10,13 @@ from typing import List, Dict
 from threading import Thread
 from queue import Queue
 # import orjson
-import torch
+# import torch
 import numpy as np
-from pyvi import ViTokenizer
+# from pyvi import ViTokenizer
 from loguru import logger
-from transformers import AutoTokenizer, AutoModelForTokenClassification
-from transformers import pipeline
-from sentence_transformers import SentenceTransformer
+# from transformers import AutoTokenizer, AutoModelForTokenClassification
+# from transformers import pipeline
+# from sentence_transformers import SentenceTransformer
 from src.ai.services.text2frame_services.elastic_service import ESEngine
 from src.ai.services.utils.decorator import processing_time
 
@@ -44,7 +44,7 @@ class SimilaritySentence():
     #         cls._instance = super(SimilaritySentence, cls).__new__(cls, *args, **kwargs)
     #     return cls._instance
 
-    def __init__(self, default_dict_path: str = "character_dict.json"):
+    def __init__(self, default_dict_path: str = "D:/tnchau/Project/ViSTAR/data/character_dict.json"):
         self.es: ESEngine = ESEngine()
         self.default_frame: Dict = {}
         self.word_list: Queue = Queue()

@@ -16,7 +16,7 @@ class StreamProcessor:
         self.channel = grpc.insecure_channel("localhost:50051")
         self.stub = streaming_pb2_grpc.StreamingStub(self.channel)
         self.ss = SimilaritySentence(
-            default_dict_path="D:\\NCKH\\Text_to_Sign\\ViSTAR\src\\ai\\services\\text2frame_services\\data\\character_dict.json"
+            default_dict_path="D:/tnchau/Project/ViSTAR/data/character_dict.json"
         )
 
     def pop_text_stream(self):
