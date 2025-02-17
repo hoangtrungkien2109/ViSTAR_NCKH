@@ -154,7 +154,7 @@ class ESEngine():
             #     logger.debug(e)
             #     logger.warning(f"Word: {word}, File: {file_name}")
         logger.warning("Starting to upload to elasticsearch")
-        helpers.bulk(self.es, data)
+        helpers.streaming_bulk(self.es, data)
         logger.info("Data pushed to elastic successfully")
         if json_path is not None:
             with open(json_path, "a") as f:
