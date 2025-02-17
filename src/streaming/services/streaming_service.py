@@ -59,7 +59,6 @@ class StreamingBaseService(streaming_pb2_grpc.StreamingServicer):
     def PopFrame(self, request, context):
         while True:
             if not self.frame_queue.empty():
-                logger.info("Pop frame")
                 yield streaming_pb2.PopFrameResponse(request_status="Success", frame=self.frame_queue.get())
             time.sleep(DELAY_TIME)
 

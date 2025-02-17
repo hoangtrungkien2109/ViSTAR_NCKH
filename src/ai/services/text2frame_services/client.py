@@ -16,7 +16,7 @@ class StreamProcessor:
         self.channel = grpc.insecure_channel("localhost:50051")
         self.stub = streaming_pb2_grpc.StreamingStub(self.channel)
         self.ss = SimilaritySentence(
-            default_dict_path="D:/tnchau/Project/ViSTAR/data/character_dict.json"
+            default_dict_path=os.getenv("DEFAULT_DICT")
         )
 
     def pop_text_stream(self):
@@ -102,21 +102,21 @@ def run():
                 logger.info(f"Poped text from server: {response.text}")
                 ss.push_word(response.text)
                 logger.info("Processing text...")
-                frames = ss.get_frame()
-                logger.info("Convert into frame")
+                # frames = ss.get_frame()
+                # logger.info("Convert into frame")
 
-                # Construct Matrix with rows and elements
-                frame_matrix_list = streaming_pb2.MatrixList(
-                    matrix=[
-                        streaming_pb2.Matrix(
-                            rows=[
-                                streaming_pb2.MatrixRow(
-                                    elements=point
-                                ) for point in frame
-                            ]
-                        ) for frame in frames
-                    ]
-                )
+                # # Construct Matrix with rows and elements
+                # frame_matrix_list = streaming_pb2.MatrixList(
+                #     matrix=[
+                #         streaming_pb2.Matrix(
+                #             rows=[
+                #                 streaming_pb2.MatrixRow(
+                #                     elements=point
+                #                 ) for point in frame
+                #             ]
+                #         ) for frame in frames
+                #     ]
+                # )
 
                 # Construct Matrix with rows and elements
                 # frame_matrix = streaming_pb2.Matrix(
