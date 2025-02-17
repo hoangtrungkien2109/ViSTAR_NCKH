@@ -14,6 +14,8 @@ DELAY_TIME = float(os.getenv("DELAY_TIME"))
 # Constants for visualization
 IMAGE_HEIGHT = 720
 IMAGE_WIDTH = 1024
+import speech_recognition as sr
+import time
 
 def create_grpc_channel():
     """Creates and returns a gRPC channel."""
@@ -53,21 +55,41 @@ def visualize_landmarks(frame):
     """
     if frame.shape != (1, 75, 3):
         return None
-
-    frame = frame[0]  # Remove the first dimension to get shape (75, 3)
-
-    # Create a blank black image
-    blank_image = np.zeros((IMAGE_HEIGHT, IMAGE_WIDTH, 3), dtype=np.uint8)
-
-    for x, y, _ in frame:
-        # Convert normalized coordinates (assuming 0-1 range) to pixel coordinates
-        px, py = int(x * IMAGE_WIDTH), int(y * IMAGE_HEIGHT)
-
-        # Ensure the points are within bounds
-        if 0 <= px < IMAGE_WIDTH and 0 <= py < IMAGE_HEIGHT:
-            cv2.circle(blank_image, (px, py), 5, (0, 255, 0), -1)  # Draw green circle
-
-    return blank_image
+    
+def recognize_and_send():
+    recognizer = sr.Recognizer()
+    with sr.Microphone() as source:
+        st.info("🎤 Đang lắng nghe... Hãy nói gì đó!")
+        recognizer.adjust_for_ambient_noise(source)  # Giảm nhiễu nền
+        while True:
+            try:
+                audio = recognizer.listen(source, timeout=5)  # Lắng nghe trong 5s
+                text = recognizer.recognize_google(audio, language="vi-VN")
+                words = text.split()
+                channel = create_grpc_channel()
+                stub = streaming_pb2_grpc.StreamingStub(channel)
+                for word in words:
+                    status, timestamp = push_text(stub, word)
+            
+                if "Error" not in status:
+                    st.success(f"Text pushed successfully! Status: {status}")
+                    # Store message in history
+                    st.session_state.messages.append({
+                        'text': word,
+                        'timestamp': timestamp,
+                        'status': status
+                    })
+                else:
+                    st.error(status)
+                    time.sleep(0.5)
+            except sr.WaitTimeoutError:
+                st.warning("⏳ Không phát hiện giọng nói, hãy thử lại!")
+            except sr.UnknownValueError:
+                st.error("❌ Không nhận diện được, hãy thử lại!")
+            except sr.RequestError:
+                st.error("⚠️ Lỗi kết nối đến Google API!")
+            
+            time.sleep(1)  # Tránh vòng lặp quá nhanh
 
 def main():
     st.title("Streaming Text Service")
@@ -87,43 +109,33 @@ def main():
         st.sidebar.error(f"Failed to connect: {str(e)}")
         return
 
-    # Push Text Section
-    st.header("Push Text")
-    text_input = st.text_area("Enter your text:", height=100)
+    # Create tabs for Push and Pop operations
+    tab1, tab2 = st.tabs(["Push Text", "Pop Text"])
+    
+    # Push Text Tab
+    with tab1:
+        st.header("Push Text")
+        if st.button("🎙️Nhận diện"):
+            recognize_and_send()
+        
+        # Real-time Frame Visualization
+        st.header("Real-time Frame Visualization")
 
-    if st.button("Send Text"):
-        if text_input.strip():
-            status, timestamp = push_text(stub, text_input)
-            if "Error" not in status:
-                st.success(f"Text pushed successfully! Status: {status}")
-                st.session_state.messages.append({'text': text_input, 'timestamp': timestamp, 'status': status})
-            else:
-                st.error(status)
-        else:
-            st.warning("Please enter some text before sending.")
+        if st.button("Start Streaming"):
+            st.session_state.running = True
+        if st.button("Stop Streaming"):
+            st.session_state.running = False
 
-    # Real-time Frame Visualization
-    st.header("Real-time Frame Visualization")
+        frame_placeholder = st.empty()
 
-    if st.button("Start Streaming"):
-        st.session_state.running = True
-    if st.button("Stop Streaming"):
-        st.session_state.running = False
-
-    frame_placeholder = st.empty()
-
-    while st.session_state.running:
-        frame = fetch_image_frame(stub)
-        logger.info("Visualize")
-        if frame is not None:
-            visualized_frame = visualize_landmarks(frame)
-            if visualized_frame is not None:
-                logger.info("Visualize")
-                frame_placeholder.image(visualized_frame, channels="RGB")
-        time.sleep(DELAY_TIME)
-
-        # st.rerun()
-
-
+        while st.session_state.running:
+            frame = fetch_image_frame(stub)
+            logger.info("Visualize")
+            if frame is not None:
+                visualized_frame = visualize_landmarks(frame)
+                if visualized_frame is not None:
+                    logger.info("Visualize")
+                    frame_placeholder.image(visualized_frame, channels="RGB")
+            time.sleep(DELAY_TIME)
 if __name__ == "__main__":
     main()
