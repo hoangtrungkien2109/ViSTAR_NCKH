@@ -16,7 +16,7 @@ class StreamProcessor:
         self.channel = grpc.insecure_channel("localhost:50051")
         self.stub = streaming_pb2_grpc.StreamingStub(self.channel)
         self.ss = SimilaritySentence(
-            default_dict_path="D:\\NCKH\\Text_to_Sign\\ViSTAR\src\\ai\\services\\text2frame_services\\data\\character_dict.json"
+            default_dict_path="D:/tnchau/Project/ViSTAR/data/character_dict.json"
         )
 
     def pop_text_stream(self):
@@ -62,6 +62,30 @@ class StreamProcessor:
             self.executor.submit(self.process_word)
 
         pop_thread.join()
+from loguru import logger
+import numpy as np
+
+def numpy_to_matrix_list(array):
+    matrix_list = streaming_pb2.MatrixList()
+    
+    print(f"Converting numpy array of shape {array.shape} to MatrixList...")
+
+    for matrix in array:  # Loop over batch dimension (N)
+        matrix_pb = matrix_list.matrix.add()  # Add a new matrix to the list
+        for row in matrix:  # Loop over rows
+            row_pb = matrix_pb.rows.add()  # Add a new row
+            row_pb.elements.extend(row.tolist())  # Convert row to list and extend
+    
+    return matrix_list
+
+def matrix_list_to_numpy(matrix_list):
+    numpy_array = np.array([
+        [[element for element in row.elements] for row in matrix.rows]
+        for matrix in matrix_list.matrix
+    ])
+
+    print(f"Converted back to numpy array of shape {numpy_array.shape}")
+    return numpy_array
 
 def run():
     ss: SimilaritySentence = SimilaritySentence(
@@ -119,9 +143,8 @@ def run():
                 # if response.text == "add frame":
             push_frame_response = stub.PushFrame(streaming_pb2.PushFrameRequest(frame=frame_matrix_list))
             logger.info(push_frame_response.request_status)
-
-
-
+        
+            
 if __name__ == "__main__":
     # processor = StreamProcessor()
     # processor.run()

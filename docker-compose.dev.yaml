@@ -12,10 +12,10 @@ services:
     deploy:
       resources:
         limits:
-          memory: 3g
+          memory: 5g
     volumes:
-      - D:/NCKH/Text_to_Sign/ViSTAR/src/ai/services/text2frame_services/data/elastic_data:/usr/share/elasticsearch/data
-      - D:/NCKH/Text_to_Sign/ViSTAR/src/ai/services/text2frame_services/data/elastic_log:/usr/share/elasticsearch/logs
+      - ./data/elastic_data:/usr/share/elasticsearch/data
+      - ./data/elastic_log:/usr/share/elasticsearch/logs
     networks:
       - elastic
 
