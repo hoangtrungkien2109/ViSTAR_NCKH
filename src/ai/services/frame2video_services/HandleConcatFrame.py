@@ -11,13 +11,18 @@ def concatenate_frame(prev_frame, post_frame):
     prev_frame = np.array(prev_frame)
     post_frame = np.array(post_frame)
     
-    # prev_frame = prev_frame[~np.any(prev_frame == 0, axis=(1,2))]
-    # post_frame = post_frame[~np.any(post_frame == 0, axis=(1,2))]
-
+    logger.info(f"Prev:{prev_frame.shape}")
+    logger.info(f"Post:{post_frame.shape}")
+    
+    if np.array_equal(prev_frame, post_frame):
+        logger.info("2 frame equal")
+        middle = np.linspace(prev_frame, post_frame, num=1)
+        return middle
+    
     if np.linalg.norm(prev_frame - post_frame) <= 1:
-        middle = np.linspace(prev_frame[-1], post_frame, num=7)
+        middle = np.linspace(prev_frame, post_frame, num=3)
     elif np.linalg.norm(prev_frame - post_frame) <= 2:
-        middle = np.linspace(prev_frame, post_frame, num=10)
+        middle = np.linspace(prev_frame, post_frame, num=5)
     else:
         middle = np.linspace(prev_frame, post_frame, num=15)
     
@@ -52,15 +57,22 @@ class HandleConcatFrame:
                 concatenated_frame = concatenated_frame.tolist()
                 
                 # Push into queue
+                logger.info(f"old: {len(self.processed_frame_queue)}")
                 self.processed_frame_queue.extend(concatenated_frame)
+                logger.info(f"new: {len(self.processed_frame_queue)}")
                 
                 logger.success("Processed successfuly")
         except IndexError:
-            logger.error("Some error")
+            logger.error("Queue empty")
             self.processed_frame_queue.extend(frames)
+            logger.info(len(self.processed_frame_queue))
+        except Exception as e:
+            print(e)
     
     def pop(self):
         try:
-            return self.processed_frame_queue.pop()
+            a = np.array([self.processed_frame_queue.pop()])
+            logger.info(f"len: {len(self.processed_frame_queue)}")
+            return a
         except IndexError:
             return None

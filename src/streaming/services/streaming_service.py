@@ -59,12 +59,15 @@ class StreamingBaseService(streaming_pb2_grpc.StreamingServicer):
     def PopFrame(self, request, context):
         while True:
             if not self.frame_queue.empty():
-                logger.info("Khong empty")
+                logger.info("Pop frame")
                 yield streaming_pb2.PopFrameResponse(request_status="Success", frame=self.frame_queue.get())
+            time.sleep(DELAY_TIME)
+
+
 
     def PushImage(self, request, context):
         try:
-            self.image_queue.put(request.text)
+            self.image_queue.put(request.image)
             return streaming_pb2.PushImageResponse(request_status="Success")
         except Exception as e:
             raise GrpcException(status_code=StatusCode.INTERNAL, details=str(e)) from e
@@ -72,8 +75,10 @@ class StreamingBaseService(streaming_pb2_grpc.StreamingServicer):
     def PopImage(self, request, context):
         while True:
             if self.image_queue.empty():
-                yield streaming_pb2.PopImageResponse(request_status="Empty", text=None)
+                yield streaming_pb2.PopImageResponse(request_status="Empty")
             else:
                 image = self.image_queue.get()
-                yield streaming_pb2.PopImageResponse(request_status="Success", text=image)
+                logger.warning("POP image")
+                yield streaming_pb2.PopImageResponse(request_status="Success", image=image)
             time.sleep(DELAY_TIME)
+

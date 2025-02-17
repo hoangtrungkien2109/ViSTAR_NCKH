@@ -44,7 +44,7 @@ class SimilaritySentence():
     #         cls._instance = super(SimilaritySentence, cls).__new__(cls, *args, **kwargs)
     #     return cls._instance
 
-    def __init__(self, default_dict_path: str = "D:/tnchau/Project/ViSTAR/data/character_dict.json"):
+    def __init__(self, default_dict_path: str = "character_dict.json"):
         self.es: ESEngine = ESEngine()
         self.default_frame: Dict = {}
         self.word_list: Queue = Queue()
@@ -66,14 +66,16 @@ class SimilaritySentence():
 
     def get_frame(self) -> List[np.ndarray]:
         if not self.word_list.empty():
-            current_word = self.word_list.get()
-            searched_result = self.es.search(word=current_word)
-            # searched_word = searched_result[0]["_source"]["word"]
-            if len(searched_result) > 0:
-                frames = self.es.decode_frame(searched_result[0]["_source"]["frame"])
-                return frames
-            else:
-                return self.default_frame["default"]
+            # current_word = self.word_list.get()
+            # searched_result = self.es.search(word=current_word)
+            # # searched_word = searched_result[0]["_source"]["word"]
+            # if len(searched_result) > 0:
+            #     frames = self.es.decode_frame(searched_result[0]["_source"]["frame"])
+            #     logger.error("SEARCHed")
+            #     return frames
+            # else:
+            #     return self.default_frame["default"]
+            return self.default_frame["a"]
         else:
             return self.default_frame["default"]
 

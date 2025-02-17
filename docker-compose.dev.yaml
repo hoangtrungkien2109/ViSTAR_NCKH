@@ -12,10 +12,10 @@ services:
     deploy:
       resources:
         limits:
-          memory: 1g
+          memory: 5g
     volumes:
-      - D:/tnchau/Project/ViSTAR/data/data:/usr/share/elasticsearch/data
-      - D:/tnchau/Project/ViSTAR/data/log:/usr/share/elasticsearch/logs
+      - ./data/elastic_data:/usr/share/elasticsearch/data
+      - ./data/elastic_log:/usr/share/elasticsearch/logs
     networks:
       - elastic
 
