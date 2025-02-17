@@ -4,12 +4,21 @@
 env/
 venv/
 ENV/
+.env
 
 # Data
 data/
+*.csv
+*.json
 
 # Cache
 __pycache__/
 
 # Testing
 unit_test.py
+*_temp.py
+*copy.py
+
+# Proto files
+streaming_pb2.py
+streaming_pb2_grpc.py
