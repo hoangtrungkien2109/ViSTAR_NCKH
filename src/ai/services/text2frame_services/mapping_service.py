@@ -120,6 +120,7 @@ class SimilaritySentence():
         new = re.sub(r'[ồốổỗộô]', 'o', new)
         new = re.sub(r'[ùúủũụ]', 'u', new)
         new = re.sub(r'[ừứửữựư]', 'ư', new)
+        new = re.sub(r'[ỳýỷỹỵy]', 'y', new)
         return new
 
 # ss = SimilaritySentence()
