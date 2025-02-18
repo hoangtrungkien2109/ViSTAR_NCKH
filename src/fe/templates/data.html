@@ -2,33 +2,97 @@
 {% block title %}Capture Keypoints{% endblock %}
 {% block content %}
 <div class="max-w-4xl mx-auto">
-    <div class="card">
-        <div class="card-header">
-            <h2 class="text-xl font-bold">Capture Keypoints Demo</h2>
-        </div>
-        <div class="card-body">
-            <!-- Capture Controls -->
-            <div class="flex space-x-4 mb-6">
-                <form action="/capture/start" method="post" class="flex-1">
-                    <div class="flex space-x-2">
-                        <div class="flex-1">
-                            <label class="form-label" for="word">Word:</label>
-                            <input type="text" name="word" id="word" value="hello" class="form-input" required>
-                        </div>
-                        <button type="submit" class="btn btn-primary self-end">Start Capture</button>
-                    </div>
-                </form>
-                
-                <form action="/capture/stop" method="post">
-                    <button type="submit" class="btn btn-secondary self-end">Stop Capture</button>
-                </form>
-            </div>
-
-            <!-- Video Feed -->
-            <div class="video-container">
-                <img src="/video_feed" class="video-feed" alt="Live video feed">
-            </div>
-        </div>
+  <div class="card">
+    <div class="card-header">
+      <h2 class="text-xl font-bold">Capture Keypoints Demo</h2>
     </div>
+    <div class="card-body">
+      <!-- Capture Controls -->
+      <div class="flex space-x-4 mb-6">
+        <form id="start-form" action="/capture/start" method="post" class="flex-none">
+          <div class="flex items-center space-x-2">
+            <div>
+              <input type="text" name="word" id="word" value="Input your Word!" class="form-input" required>
+            </div>
+            <div class="flex items-center">
+              <input type="checkbox" id="auto_stop" name="auto_stop" value="true" class="mr-1">
+              <label for="auto_stop" class="text-sm">Auto Stop</label>
+              <input type="number" id="auto_stop_time" name="auto_stop_time" value="15" min="1" class="form-input ml-1 w-20">
+              <span class="ml-1 text-sm">sec</span>
+            </div>
+            <button type="submit" class="btn btn-primary">Start Capture</button>
+          </div>
+        </form>
+
+        <form id="stop-form" action="/capture/stop" method="post" class="flex-none">
+          <button type="submit" class="btn btn-secondary">Stop Capture</button>
+        </form>
+      </div>
+
+      <!-- Video Feed -->
+      <div class="video-container">
+        <img src="/video_feed" class="video-feed" alt="Live video feed">
+      </div>
+    </div>
+  </div>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const startForm = document.getElementById('start-form');
+  const stopForm = document.getElementById('stop-form');
+  let autoStopTimer = null;
+
+  startForm.addEventListener('submit', async function(event) {
+    event.preventDefault();
+    const formData = new FormData(startForm);
+
+    // Submit the start capture request
+    await fetch('/capture/start', {
+      method: 'POST',
+      body: formData
+    });
+
+    // If auto_stop checkbox is checked, set timer based on user input
+    if (formData.get('auto_stop') === 'true') {
+      let autoStopTime = parseInt(document.getElementById('auto_stop_time').value);
+      if (isNaN(autoStopTime) || autoStopTime < 1) {
+        autoStopTime = 15; // default to 15 sec if invalid input
+      }
+      autoStopTimer = setTimeout(() => {
+        fetchStopCapture();
+      }, autoStopTime * 1000);
+    }
+
+    showToast("Tạo Dữ Liệu Cho: " + formData.get('word'));
+  });
+
+  stopForm.addEventListener('submit', async function(event) {
+    event.preventDefault();
+    if (autoStopTimer) {
+      clearTimeout(autoStopTimer);
+      autoStopTimer = null;
+    }
+    await fetchStopCapture();
+  });
+
+  async function fetchStopCapture() {
+    try {
+      const response = await fetch('/capture/stop', { method: 'POST' });
+      const data = await response.json();
+      console.log("Response from /capture/stop:", data);
+      if(data.status.trim().toLowerCase() === "capturing stopped"){
+        showToast("Tạo Dữ Liệu Thành Công!");
+        // Optionally, refresh the page or update the UI:
+        // window.location.reload();
+      } else {
+        showToast("Error: " + data.status);
+      }
+    } catch (error) {
+      console.error("Error during stop capture:", error);
+      showToast("An error occurred.");
+    }
+  }
+});
+</script>
 {% endblock %}

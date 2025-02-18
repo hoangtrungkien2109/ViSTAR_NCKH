@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+    <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -102,6 +102,7 @@
             </div>
         {% endif %}
 
+
         {% block content %}{% endblock %}
     </main>
 
@@ -113,5 +114,22 @@
             </p>
         </div>
     </footer>
+    <!-- Toast notification container -->
+    <div id="toast" class="fixed top-4 left-4 bg-green-500 text-white px-4 py-2 rounded shadow-lg hidden z-50">
+      <span id="toast-message"></span>
+    </div>
+     <script>
+        // Function to show a toast message in the top-left corner.
+        function showToast(message) {
+          const toast = document.getElementById('toast');
+          const toastMessage = document.getElementById('toast-message');
+          toastMessage.textContent = message;
+          toast.classList.remove('hidden');
+          // Hide toast after 3 seconds.
+          setTimeout(() => {
+            toast.classList.add('hidden');
+          }, 3000);
+        }
+      </script>
 </body>
 </html>
