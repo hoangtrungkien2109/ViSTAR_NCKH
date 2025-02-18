@@ -16,7 +16,7 @@ def concatenate_frame(prev_frame, post_frame):
     
     if np.array_equal(prev_frame, post_frame):
         logger.info("2 frame equal")
-        middle = np.linspace(prev_frame, post_frame, num=1)
+        middle = np.linspace(prev_frame, post_frame, num=2)
         return middle
     
     if np.linalg.norm(prev_frame - post_frame) <= 1:
@@ -44,28 +44,20 @@ class HandleConcatFrame:
         """
         try:
             if (self.processed_frame_queue[-1] is not None):
-                logger.info("Start concat")
                 prev_frame = self.processed_frame_queue.pop()
                 post_frame = frames[0]
                 
                 # Concat 2 frame
                 middle = concatenate_frame(prev_frame=prev_frame, post_frame=post_frame)
-                logger.info(f"Middle: {middle.shape}")
-                logger.info(f"post_frame: {post_frame.shape}")
                 
                 concatenated_frame = np.concatenate([middle, frames],axis=0)
                 concatenated_frame = concatenated_frame.tolist()
                 
-                # Push into queue
-                logger.info(f"old: {len(self.processed_frame_queue)}")
                 self.processed_frame_queue.extend(concatenated_frame)
-                logger.info(f"new: {len(self.processed_frame_queue)}")
                 
                 logger.success("Processed successfuly")
         except IndexError:
-            logger.error("Queue empty")
             self.processed_frame_queue.extend(frames)
-            logger.info(len(self.processed_frame_queue))
         except Exception as e:
             print(e)
     
