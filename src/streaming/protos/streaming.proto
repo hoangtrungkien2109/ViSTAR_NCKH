@@ -51,7 +51,7 @@ message PopFrameResponse {
 }
 
 message PushImageRequest {
-  string text = 1;
+  bytes image = 1;
   string time_stamp = 2;
 }
 
@@ -64,7 +64,7 @@ message PopImageRequest {
 }
 
 message PopImageResponse {
-  string text = 1;
+  bytes image = 1;
   string request_status = 2;
 }
 

@@ -1,114 +1,92 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>gRPC Text Push Client</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/google-protobuf/3.21.2/google-protobuf.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/grpc-web/1.4.2/grpc-web-client.js"></script>
+    <title>Real-time Text and Image Streaming</title>
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            max-width: 800px;
-            margin: 2rem auto;
-            padding: 0 1rem;
-        }
         .container {
-            display: flex;
-            flex-direction: column;
-            gap: 1rem;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
         }
-        .input-group {
-            display: flex;
-            gap: 1rem;
+        .input-area {
+            margin-bottom: 20px;
         }
-        input {
-            flex: 1;
-            padding: 0.5rem;
-            font-size: 1rem;
+        #textInput {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 10px;
         }
-        button {
-            padding: 0.5rem 1rem;
-            font-size: 1rem;
-            background-color: #007bff;
-            color: white;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
+        #imageDisplay {
+            width: 100%;
+            max-width: 640px;
+            height: auto;
+            border: 1px solid #ccc;
         }
-        button:hover {
-            background-color: #0056b3;
-        }
-        #status {
-            margin-top: 1rem;
-            padding: 1rem;
-            border-radius: 4px;
-        }
-        .success {
-            background-color: #d4edda;
-            color: #155724;
-        }
-        .error {
-            background-color: #f8d7da;
-            color: #721c24;
+        .status {
+            margin-top: 10px;
+            color: #666;
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>Text Push Client</h1>
-        <div class="input-group">
-            <input type="text" id="textInput" placeholder="Enter your text here">
-            <button onclick="sendText()">Send</button>
+        <div class="input-area">
+            <textarea id="textInput" rows="4" placeholder="Enter text to send..."></textarea>
+            <button onclick="sendText()">Send Text</button>
         </div>
-        <div id="status"></div>
+        <div class="image-area">
+            <img id="imageDisplay" alt="Received image will appear here">
+            <div id="status" class="status">Not connected</div>
+        </div>
     </div>
 
-    <script type="module">
-        import { PushTextRequest } from './generated/proto_pb.js';
-        import { YourServiceClient } from './generated/proto_grpc_web_pb.js';
+    <script>
+        let ws;
+        let reconnectAttempts = 0;
+        const maxReconnectAttempts = 5;
 
-        // Replace with your gRPC server's address
-        const client = new YourServiceClient('http://localhost:50051');
+        function connect() {
+            ws = new WebSocket('ws://localhost:8000/ws');
+            
+            ws.onopen = function() {
+                document.getElementById('status').textContent = 'Connected';
+                reconnectAttempts = 0;
+            };
+            
+            ws.onmessage = function(event) {
+                if (event.data.startsWith('data:image')) {
+                    console.log("Show image");
+                    document.getElementById('imageDisplay').src = event.data;
+                }
+            };
+            
+            ws.onclose = function() {
+                document.getElementById('status').textContent = 'Disconnected';
+                if (reconnectAttempts < maxReconnectAttempts) {
+                    reconnectAttempts++;
+                    setTimeout(connect, 1000 * reconnectAttempts);
+                }
+            };
+            
+            ws.onerror = function(error) {
+                console.error('WebSocket error:', error);
+                document.getElementById('status').textContent = 'Error: ' + error;
+            };
+        }
 
-        async function sendText() {
+        function sendText() {
             const textInput = document.getElementById('textInput');
-            const statusDiv = document.getElementById('status');
-            const text = textInput.value;
-
-            if (!text) {
-                showStatus('Please enter some text', 'error');
-                return;
-            }
-
-            try {
-                // Create and populate the request
-                const request = new PushTextRequest();
-                request.setText(text);
-
-                // Call the gRPC method
-                const response = await new Promise((resolve, reject) => {
-                    client.pushText(request, {}, (err, response) => {
-                        if (err) {
-                            reject(err);
-                        } else {
-                            resolve(response);
-                        }
-                    });
-                });
-
-                showStatus('Text sent successfully!', 'success');
+            if (ws && ws.readyState === WebSocket.OPEN) {
+                ws.send(textInput.value);
                 textInput.value = '';
-            } catch (error) {
-                showStatus(`Error: ${error.message}`, 'error');
+            } else {
+                document.getElementById('status').textContent = 'Not connected. Trying to reconnect...';
+                connect();
             }
         }
 
-        function showStatus(message, type) {
-            const statusDiv = document.getElementById('status');
-            statusDiv.textContent = message;
-            statusDiv.className = type;
-        }
+        // Initial connection
+        connect();
     </script>
 </body>
 </html>

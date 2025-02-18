@@ -9,14 +9,14 @@ import src.streaming.pb.streaming_pb2 as streaming_pb2
 import src.streaming.pb.streaming_pb2_grpc as streaming_pb2_grpc
 from src.ai.services.text2frame_services.mapping_service import SimilaritySentence
 load_dotenv()
-
+DEFAULT_DICT = os.getenv("DEFAULT_DICT")
 class StreamProcessor:
     def __init__(self):
         self.executor = concurrent.futures.ThreadPoolExecutor(max_workers=5)  # Adjust workers as needed
         self.channel = grpc.insecure_channel("localhost:50051")
         self.stub = streaming_pb2_grpc.StreamingStub(self.channel)
         self.ss = SimilaritySentence(
-            default_dict_path="D:/tnchau/Project/ViSTAR/data/character_dict.json"
+            default_dict_path=DEFAULT_DICT
         )
 
     def pop_text_stream(self):
@@ -97,13 +97,8 @@ def run():
 
         for response in pop_text_response:
             if response.request_status == "Empty":
-                logger.warning("Waiting...")
-            else:
-                logger.info(f"Poped text from server: {response.text}")
-                ss.push_word(response.text)
-                logger.info("Processing text...")
                 frames = ss.get_frame()
-                logger.info("Convert into frame")
+                logger.info("Default frame")
 
                 # Construct Matrix with rows and elements
                 frame_matrix_list = streaming_pb2.MatrixList(
@@ -117,32 +112,25 @@ def run():
                         ) for frame in frames
                     ]
                 )
+                push_frame_response = stub.PushFrame(streaming_pb2.PushFrameRequest(frame=frame_matrix_list))        
+            else:
+                logger.info(f"Poped text from server: {response.text}")
+                ss.push_word(response.text)
+                frames = ss.get_frame()
 
                 # Construct Matrix with rows and elements
-                # frame_matrix = streaming_pb2.Matrix(
-                #     rows=[
-                #         streaming_pb2.MatrixRow(elements=[1.0, 2.0]),  # First row
-                #         streaming_pb2.MatrixRow(elements=[3.0, 4.0])   # Second row
-                #     ]
-                # )
-            frames = ss.get_frame()
-            logger.info("Convert into frame")
-
-            # Construct Matrix with rows and elements
-            frame_matrix_list = streaming_pb2.MatrixList(
-                matrix=[
-                    streaming_pb2.Matrix(
-                        rows=[
-                            streaming_pb2.MatrixRow(
-                                elements=point
-                            ) for point in frame
-                        ]
-                    ) for frame in frames
-                ]
-            )
-                # if response.text == "add frame":
-            push_frame_response = stub.PushFrame(streaming_pb2.PushFrameRequest(frame=frame_matrix_list))
-            logger.info(push_frame_response.request_status)
+                frame_matrix_list = streaming_pb2.MatrixList(
+                    matrix=[
+                        streaming_pb2.Matrix(
+                            rows=[
+                                streaming_pb2.MatrixRow(
+                                    elements=point
+                                ) for point in frame
+                            ]
+                        ) for frame in frames
+                    ]
+                )
+                push_frame_response = stub.PushFrame(streaming_pb2.PushFrameRequest(frame=frame_matrix_list))        
         
             
 if __name__ == "__main__":
