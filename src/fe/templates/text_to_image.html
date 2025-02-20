@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% block title %}Translation{% endblock %}
+{% block content %}
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Text to Sign</title>
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', path='css/texttosign_style.css') }}">
+
+
+
+</head>
+<body>
+    <div class="background-container">
+        <!-- Hình ảnh bên trái -->
+<!--        <div class="side-image left-side">-->
+<!--            <img src="{{ url_for('static', path='css/left1.png') }}" class="slide-img active" alt="Left Image 1"> &lt;!&ndash; Thêm lớp active &ndash;&gt;-->
+<!--            <img src="{{ url_for('static', path='css/left2.png') }}" class="slide-img" alt="Left Image 2">-->
+<!--        </div>-->
+
+        <!-- Phần nội dung chính -->
+        <div class="container">
+                <div class="toolbar">
+                    <button class="toolbar-btn" id="sound-btn">Sound</button>
+                </div>
+
+                <div class="translate-section">
+                    <input type="file" name="file" id="file-input" accept=".txt, .mp3" />
+                    <div class="input-area">
+                        <textarea class="input-text" id="input-text" placeholder="Nhập văn bản"></textarea>
+                        <video controls autoplay width="128" class="translation-result" id="video-container">
+                            <source id="video-source" src="" type="video/mp4">
+                            Your browser does not support the video tag.
+                        </video>
+                    </div>
+                </div>
+
+                <div class="fps-container">
+                    <input type="range" min="20" max="60" value="30" class="fps-slider" id="fps-slider">
+                    <div class="fps-value" id="fps-value">FPS: 30</div>
+                </div>
+
+                <button class="convert-btn" onclick="convertText()">Convert</button>
+                <a href="/sign_to_text" class="convert-btn">Switch</a>
+
+        <!-- Hình ảnh bên phải -->
+<!--        <div class="side-image right-side">-->
+<!--            <img src="{{ url_for('static', path='css/right1.png') }}" class="slide-img active" alt="Right Image 1"> &lt;!&ndash; Thêm lớp active &ndash;&gt;-->
+<!--            <img src="{{ url_for('static', path='css/right2.png') }}" class="slide-img" alt="Right Image 2">-->
+<!--        </div>-->
+
+    </div>
+    </div>
+</body>
+
+</html>
+{% endblock %}

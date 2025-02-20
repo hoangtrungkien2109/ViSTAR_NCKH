@@ -1,0 +1,317 @@
+/* Reset một số mặc định của trình duyệt */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: Arial, sans-serif;
+}
+
+body {
+    background: linear-gradient(135deg, #e0e5ec, #cfd8dc); /* Light gradient background */
+    font-family: Arial, sans-serif;
+    color: #333; /* Darker text for readability */
+}
+
+
+
+.background-container {
+    display: flex;
+    width: 100%;
+    height: 100vh;
+}
+
+.side-image {
+    position: relative;
+    width: 20%; /* Chiếm 15% chiều rộng mỗi bên */
+    height: 100vh; /* Chiều cao bằng 100% màn hình */
+    overflow: hidden;
+}
+
+.side-image .slide-img {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 100%; /* Đảm bảo ảnh vừa với chiều ngang */
+    height: 100%; /* Giữ tỷ lệ gốc của ảnh */
+    transform: translate(-50%, -50%); /* Căn giữa ảnh */
+    object-fit: cover; /* Cắt ảnh nếu cần để vừa khung */
+    opacity: 0;
+    transition: opacity 1s ease-in-out;
+}
+
+.side-image .slide-img.active {
+    opacity: 1;
+}
+
+
+
+
+
+.container {
+    width: 100%; /* Phần nội dung chính */
+
+    background: rgba(255, 255, 255, 0.8);
+    margin: auto;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+}
+
+
+
+.background-layer {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: -1; /* Place behind all content */
+    background: linear-gradient(135deg, #8e9eab, #eef2f3); /* Soft gradient background */
+    overflow: hidden;
+}
+
+/* Animated floating objects in the background */
+.background-layer::before,
+.background-layer::after {
+    content: '';
+    position: absolute;
+    width: 250px;
+    height: 250px;
+    background: rgba(255, 255, 255, 0.2); /* Light circles with transparency */
+    border-radius: 50%;
+    animation: floatAround 20s infinite alternate ease-in-out;
+}
+
+.background-layer::before {
+    top: 20%;
+    left: 10%;
+    animation-duration: 30s;
+}
+
+.background-layer::after {
+    bottom: 20%;
+    right: 10%;
+    animation-duration: 25s;
+}
+
+@keyframes floatAround {
+    0% {
+        transform: translate(0, 0);
+    }
+    50% {
+        transform: translate(50px, 50px);
+    }
+    100% {
+        transform: translate(-50px, -50px);
+    }
+}
+
+/* Container styling for better contrast */
+.container {
+    max-width: 1000px;
+    margin: 20px auto;
+    padding: 20px;
+    background: rgba(255, 255, 255, 0.8); /* Semi-transparent white background */
+    border-radius: 10px;
+    box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+    text-align: center;
+    backdrop-filter: blur(5px); /* Slight blur to make the background stand out */
+}
+
+/* Navbar */
+.navbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 20px;
+    background-color: rgba(255, 255, 255, 0.1); /* Semi-transparent navbar */
+    border-bottom: 2px solid rgba(255, 255, 255, 0.2);
+    margin-bottom: 20px;
+    border-radius: 5px;
+}
+
+.logo {
+    width: 100px;
+    height: auto;
+}
+
+.navbar-links {
+    display: flex;
+    gap: 10px;
+}
+
+.navbar-btn {
+    background-color: #007bff;
+    color: white;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s, transform 0.3s;
+    text-decoration: none;
+}
+
+.navbar-btn:hover {
+    background-color: #0056b3;
+    transform: scale(1.1);
+}
+
+/* Tiêu đề */
+h1 {
+    font-size: 2rem;
+    margin-bottom: 20px;
+    color: #0e0d0d; /* White text for better contrast */
+}
+
+/* Toolbar */
+.toolbar {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+.toolbar-btn {
+    padding: 10px 15px;
+    background: #007bff;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s, transform 0.3s;
+}
+
+.toolbar-btn:hover {
+    background: #0056b3;
+    transform: scale(1.1);
+}
+
+/* Phần chuyển đổi */
+.translate-section {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    margin-bottom: 20px;
+}
+
+.input-area {
+    display: flex;
+    gap: 20px;
+}
+
+.input-text {
+    width: 200%;
+    height: 150px;
+    padding: 15px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 5px;
+    background: rgba(10, 10, 10, 0.1); /* Transparent input background */
+    color: #0c0c0c;
+    font-size: 16px;
+    resize: none;
+}
+
+.input-text::placeholder {
+    color: #cccccc; /* Light grey placeholder */
+}
+
+.translation-result {
+    width: 50%;
+    height: 150px;
+    padding: 15px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 5px;
+    background: rgba(3, 3, 3, 0.1);
+    color: #111111;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+}
+
+/* Convert và Switch buttons */
+.convert-btn {
+    background-color: #28a745;
+    color: white;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    text-decoration: none;
+    transition: background-color 0.3s, transform 0.3s;
+    font-size: 16px;
+    margin: 5px;
+}
+
+.convert-btn:hover {
+    background-color: #218838;
+    transform: scale(1.1);
+}
+
+/* Button container cho convert và switch */
+.button-container {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+}
+
+/* FPS Slider */
+.fps-container {
+    margin-top: 20px;
+    color: #0e0d0d;
+}
+
+.fps-slider {
+    width: 80%;
+    margin: 20px auto;
+}
+
+.fps-value {
+    font-size: 1.2rem;
+    margin-top: 10px;
+    color: #0a0a0a;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .input-area {
+        flex-direction: column;
+    }
+
+    .input-text,
+    .translation-result {
+        width: 100%;
+        height: 120px;
+    }
+
+    .toolbar {
+        flex-direction: column;
+    }
+
+    .navbar-links {
+        flex-direction: column;
+        gap: 5px;
+    }
+}
+
+/* Keyframes cho chuyển động */
+@keyframes fadeIn {
+    0% { opacity: 0; }
+    100% { opacity: 1; }
+}
+
+@keyframes slideDown {
+    0% { transform: translateY(-50px); opacity: 0; }
+    100% { transform: translateY(0); opacity: 1; }
+}
+
+@keyframes slideUp {
+    0% { transform: translateY(50px); opacity: 0; }
+    100% { transform: translateY(0); opacity: 1; }
+}
+
+@keyframes bounceIn {
+    0% { transform: scale(0.8); opacity: 0; }
+    50% { transform: scale(1.15); opacity: 1; }
+    100% { transform: scale(1); }
+}
