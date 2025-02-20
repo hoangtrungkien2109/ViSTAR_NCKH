@@ -47,7 +47,7 @@ class StreamingBaseService(streaming_pb2_grpc.StreamingServicer):
                 yield streaming_pb2.PopTextResponse(request_status="Empty", text=None)
             else:
                 yield streaming_pb2.PopTextResponse(request_status="Success", text=self.text_queue.get())
-            time.sleep(DELAY_TIME)
+            time.sleep(2)
 
     def PushFrame(self, request, context):
         try:
@@ -59,11 +59,7 @@ class StreamingBaseService(streaming_pb2_grpc.StreamingServicer):
     def PopFrame(self, request, context):
         while True:
             if not self.frame_queue.empty():
-                logger.info("Pop frame")
                 yield streaming_pb2.PopFrameResponse(request_status="Success", frame=self.frame_queue.get())
-            time.sleep(DELAY_TIME)
-
-
 
     def PushImage(self, request, context):
         try:
@@ -78,7 +74,5 @@ class StreamingBaseService(streaming_pb2_grpc.StreamingServicer):
                 yield streaming_pb2.PopImageResponse(request_status="Empty")
             else:
                 image = self.image_queue.get()
-                logger.warning("POP image")
+                logger.info("POP image")
                 yield streaming_pb2.PopImageResponse(request_status="Success", image=image)
-            time.sleep(DELAY_TIME)
-
