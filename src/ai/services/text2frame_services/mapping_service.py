@@ -19,7 +19,7 @@ from loguru import logger
 # from sentence_transformers import SentenceTransformer
 from src.ai.services.text2frame_services.elastic_service import ESEngine
 from src.ai.services.utils.decorator import processing_time
-
+import random
 
 def remove_accents(old: str):
     """
@@ -61,7 +61,9 @@ class SimilaritySentence():
         text = re.sub(r"[-()\"#/@;:<>{}=~|.?,]", "", text)
         return text
 
-    def push_word(self, words: str) -> None:
+    def push_word(self, words: str = None) -> None:
+        if words == None:
+            return None
         self.word_list.put(words)
 
     def get_frame(self) -> List[np.ndarray]:
@@ -75,6 +77,8 @@ class SimilaritySentence():
             else:
                 return self.default_frame["default"]
         else:
-            return self.default_frame["default"]
+            word = random.choice(["a", "b", "c", "d", "e"])
+            logger.info(f"Searched: {word}")
+            return self.default_frame[word]
 
 # ss = SimilaritySentence()
