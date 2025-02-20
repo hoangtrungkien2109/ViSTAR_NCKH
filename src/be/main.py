@@ -5,6 +5,7 @@ import os
 from sqlalchemy import Column, Integer, String, create_engine, ForeignKey, LargeBinary
 from sqlalchemy.orm import sessionmaker, declarative_base, Session
 from passlib.context import CryptContext
+from starlette.middleware.sessions import SessionMiddleware
 from typing import Optional
 from fastapi.staticfiles import StaticFiles
 import numpy as np
@@ -26,6 +27,8 @@ SQLALCHEMY_DATABASE_URL = "sqlite:///./users.db"  # Relative path, creates 'user
 # SQLALCHEMY_DATABASE2_URL = "sqlite:///./data_table.db"
 engine = create_engine(SQLALCHEMY_DATABASE_URL, connect_args={"check_same_thread": False})
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+
+app.add_middleware(SessionMiddleware, secret_key="YOUR_SECRET_KEY")
 
 Base = declarative_base()
 
@@ -80,7 +83,7 @@ def get_db():
 @app.get("/", response_class=HTMLResponse)
 def home(request: Request):
     """ Public home page. """
-    return templates.TemplateResponse("home.html", {"request": request})
+    return templates.TemplateResponse("text_to_image.html", {"request": request})
 
 # -----------------------------
 # REGISTER
@@ -162,7 +165,7 @@ def login(
             "login.html",
             {"request": request, "error_msg": "Invalid username or password."}
         )
-
+    request.session["username"] = user.username
     # Set global user info
     current_user_id = user.id
     current_is_admin = (user.is_admin == 1)  # or user.is_admin for boolean
@@ -170,10 +173,16 @@ def login(
     return RedirectResponse(url="/welcome", status_code=302)
 
 
+@app.get("/logout")
+def logout(request: Request):
+    request.session.pop("username", None)
+    return RedirectResponse(url="/", status_code=302)
 
 @app.get("/welcome", response_class=HTMLResponse)
 def welcome(request: Request):
     # In a real app, you'd check session or JWT token to ensure user is authenticated
+    if current_user_id is None:
+        return RedirectResponse(url="/login", status_code=302)
     return templates.TemplateResponse("home.html", {
         "request": request,
         "welcome_msg": "You are logged in!"
@@ -332,6 +341,13 @@ def delete_record(record_id: int, db: Session = Depends(get_db)):
 @app.get("/video_feed")
 def video_feed():
     return StreamingResponse(gen_frames(), media_type="multipart/x-mixed-replace; boundary=frame")
+@app.post("/stop_camera")
+def stop_camera():
+    global camera
+    if camera.isOpened():
+        camera.release()
+    return {"status": "Camera stopped"}
+
 @app.post("/capture/start")
 def capture_start(    request: Request,
     word: str = Form(...),
@@ -396,6 +412,7 @@ def capture_stop(db: Session = Depends(get_db)):
     captured_keypoints = []
 
     return {"status": "capturing stopped", "saved_file": filename, "word": current_word}
+
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="127.0.0.1", port=8000)
