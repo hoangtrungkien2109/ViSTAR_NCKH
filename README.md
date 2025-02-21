@@ -1,4 +1,24 @@
 # ViSTAR (Vietnamese Sign Language Translation and Recognition)
+<div align="center">
+
+[한국어]() | [日本語]() | [Русский]() | [Deutsch]() | [Français]() | [Español]() | [Português]() | [Türkçe]() | [Tiếng Việt]() | [العربية]()
+
+
+<div>
+    <img src="https://zenodo.org/badge/264818686.svg" alt="YOLOv5 Citation">
+    <img src="https://img.shields.io/docker/pulls/ultralytics/yolov5?logo=docker" alt="Docker Pulls">
+    <img alt="Discord" src="https://img.shields.io/discord/1089800235347353640?logo=discord&logoColor=white&label=Discord&color=blue">
+    <img alt="Ultralytics Forums" src="https://img.shields.io/discourse/users?server=https%3A%2F%2Fcommunity.ultralytics.com&logo=discourse&label=Forums&color=blue">
+    <img alt="Ultralytics Reddit" src="https://img.shields.io/reddit/subreddit-subscribers/ultralytics?style=flat&logo=reddit&logoColor=white&label=Reddit&color=blue">
+    <br>
+    <img src="https://assets.paperspace.io/img/gradient-badge.svg" alt="Run on Gradient">
+    <img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab">
+    <img src="https://kaggle.com/static/images/open-in-kaggle.svg" alt="Open In Kaggle">
+</div>
+
+  <br>
+
+
 ![ViSTAR Logo](src/fe/static/css/VISTAR.webp)
 A comprehensive system for real-time sign language translation using AI and computer vision. ViSTAR enables bidirectional translation between text and sign language through video frames.
 
