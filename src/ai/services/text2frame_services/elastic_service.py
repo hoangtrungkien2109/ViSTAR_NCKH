@@ -96,25 +96,25 @@ class ESEngine():
 
     def search(self, word: str) -> list[dict]:
         """Search similar words in elasticsearch"""
-        # search_body = {
-        #     "query": {
-        #         "fuzzy": {
-        #             "word": {
-        #                 "value": word,
-        #                 "fuzziness": "AUTO"
-        #             }
-        #         }
-        #     }
-        # }
-        # result = self.es.search(index = "frame", body=search_body)
-        # if len(result["hits"]["hits"]) > 0:  # FIX: vì sao lại >0 mà không phải ==0
         search_body = {
             "query": {
-                "match": {
-                    "word": word,
+                "fuzzy": {
+                    "word": {
+                        "value": word,
+                        "fuzziness": "AUTO"
+                    }
                 }
             }
         }
+        result = self.es.search(index = "frame", body=search_body)
+        if len(result["hits"]["hits"]) == 0:  # FIX: vì sao lại >0 mà không phải ==0
+            search_body = {
+                "query": {
+                    "match": {
+                        "word": word,
+                    }
+                }
+            }
         result = self.es.search(index = "frame", body=search_body)
         return result["hits"]["hits"]
 

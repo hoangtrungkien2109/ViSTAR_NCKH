@@ -10,7 +10,6 @@ from typing import List, Dict
 # import orjson
 import torch
 import numpy as np
-from pyvi import ViTokenizer
 from loguru import logger
 from transformers import AutoTokenizer, AutoModelForTokenClassification
 from transformers import pipeline
@@ -90,8 +89,9 @@ class SimilaritySentence():
         if self.word_queue.get_len() > 0:
             current_word = self.word_queue.pop().word
             searched_result = self.es.search(word=current_word)
+            logger.debug(f"CURRENT: {current_word}")
             if len(searched_result) > 0:
-                logger.info("Sent frame to streaming")
+                logger.success("Sent frame to streaming")
                 frames = self.es.decode_frame(searched_result[0]["_source"]["frame"])
                 return frames
             else:
@@ -124,10 +124,5 @@ class SimilaritySentence():
         new = re.sub(r'[òóỏõọồốổỗộôờớởỡợơ]', 'o', new)
         new = re.sub(r'[ừứửữựưùúủũụ]', 'u', new)
         return new
-
-    def _tokenize_text(self, text: str) -> str:
-        """Tokenize text"""
-        segment = ViTokenizer.tokenize(text)
-        return segment
 
 # ss = SimilaritySentence()

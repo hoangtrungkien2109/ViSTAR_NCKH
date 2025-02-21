@@ -1,4 +1,5 @@
 from pydantic import BaseModel
+from pyvi import ViTokenizer
 from typing import List
 
 
@@ -24,3 +25,8 @@ class WordList(BaseModel):
 
     def pop(self, index: int = 0):
         return self.word_list.pop(index)
+
+    def tokenize_text(self):
+        """Tokenize text"""
+        segments = ViTokenizer.tokenize(self.get_raw_sentence())
+        
