@@ -8,9 +8,9 @@ import re
 import json
 from typing import List, Dict
 # import orjson
-# import torch
+import torch
 import numpy as np
-# from pyvi import ViTokenizer
+from pyvi import ViTokenizer
 from loguru import logger
 from transformers import AutoTokenizer, AutoModelForTokenClassification
 from transformers import pipeline
