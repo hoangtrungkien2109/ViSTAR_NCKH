@@ -17,22 +17,7 @@ from transformers import pipeline
 # from sentence_transformers import SentenceTransformer
 from src.ai.services.text2frame_services.elastic_service import ESEngine
 from src.ai.services.utils.decorator import processing_time
-import random
-
-def remove_accents(old: str):
-    """
-    Removes common accent characters, lower form.
-    Uses: regex.
-    """
-    new = old.lower()
-    new = re.sub(r'[àáảãạằắẳẵặăầấẩẫậâ]', 'a', new)
-    new = re.sub(r'[èéẻẽẹềếểễệê]', 'e', new)
-    new = re.sub(r'[ìíỉĩị]', 'i', new)
-    new = re.sub(r'[òóỏõọồốổỗộôờớởỡợơ]', 'o', new)
-    new = re.sub(r'[ừứửữựưùúủũụ]', 'u', new)
-    return new
-from src.ai.services.text2frame_services.models.custom_list import WordList, Word
-from src.ai.services.text2frame_services.models.custom_list import WordList, Word
+from src.ai.services.text2frame_services.models.custom_list import WordList, Word, Segment
 
 
 class SimilaritySentence():
@@ -51,7 +36,7 @@ class SimilaritySentence():
             ner_max_length: int = 20,
         ):
         self.es: ESEngine = ESEngine()
-        self.word_queue: WordList = WordList()
+        self.word_queue: List[Segment] = []
         self.ner_list: WordList = WordList()
         self.ner_min_length = ner_min_length
         self.ner_max_length = ner_max_length
@@ -73,27 +58,30 @@ class SimilaritySentence():
         return text
 
     def push_word(self, word: str) -> None:
-        self.ner_list.put(Word(word=word))
-        logger.debug(f"Len of word list: {self.ner_list.get_len()}")
-        logger.debug(f"Word list: {self.ner_list.get_raw_sentence()}")
-        if self.ner_list.get_len() > self.ner_min_length:
+        self.ner_list.put(word=word)
+        self.ner_list.tokenize_text()
+        logger.debug(f"Len of word list: {self.ner_list.get_segment_len()}")
+        # logger.warning(f"Word raw list: {self.ner_list.special_word_list}")
+        # logger.warning(f"Word segment list: {self.ner_list.segment_list}")
+        logger.debug(f"Word list: {self.ner_list.get_sentence()}")
+        if self.ner_list.get_segment_len() > self.ner_min_length:
             self._detect_name()
-            if self.ner_list.get_len() > self.ner_max_length:
+            if self.ner_list.get_segment_len() > self.ner_max_length:
                 self.ner_list.pop()
                 self.ner_list.pointer -= 1
-            self.word_queue.put(self.ner_list.get(self.ner_list.pointer))
+            self.word_queue.append(self.ner_list.get(self.ner_list.pointer))
             self.ner_list.pointer += 1
 
     @processing_time
     def get_frame(self) -> List[np.ndarray]:
-        if self.word_queue.get_len() > 0:
+        if len(self.word_queue) > 0:
             current_word = self.word_queue.pop()
             if current_word.is_name == True:
                 logger.success("Sent a name (list of character) to streaming")
-                return [self.default_frame[character.lower()] for character in current_word.sub_words]
+                return [self.default_frame[character] for character in self.remove_accents(current_word.segment.replace(" ",""))]
             else:
-                searched_result = self.es.search(word=current_word.word)
-                logger.debug(f"CURRENT: {current_word.word}")
+                searched_result = self.es.search(word=current_word.segment)
+                logger.debug(f"CURRENT: {current_word.segment}")
                 if len(searched_result) > 0:
                     logger.success("Sent frame to streaming")
                     frames = self.es.decode_frame(searched_result[0]["_source"]["frame"])
@@ -108,14 +96,20 @@ class SimilaritySentence():
     @processing_time
     def _detect_name(self) -> None:
         """Detect all entity in sentence"""
-        entities = self.ner(self.ner_list.get_raw_sentence())
-        for entity in reversed(entities):
+        entities = self.ner(self.ner_list.get_sentence())
+        for entity in entities:
             if "PERSON" in entity['entity']:
-                self.ner_list.get(entity['index'] - 1).is_name = True
-                self.ner_list.get(entity['index'] - 1).sub_words = [
-                    character for character in self.remove_accents(self.ner_list.get(entity['index'] - 1).word).upper()
-                ]
-                logger.success(f"Name: {self.ner_list.get(entity['index'] - 1).word}, Convert: {self.ner_list.get(entity['index'] - 1).sub_words}")
+                word_list = [word.word for word in self.ner_list.special_word_list]
+                for i in range(len(word_list)):
+                    if entity["index"]-1 == i:
+                        self.ner_list.get_raw(i).is_name = True
+                        logger.success(f"Name: {self.ner_list.get_raw(i).word}")
+                        break
+            # for idx, word in enumerate([word.word for word in self.ner_list.word_list]):
+                
+            # if "PERSON" in entity['entity']:
+            #     self.ner_list.get(entity['index'] - 1).is_name = True
+            #     logger.success(f"Name: {self.ner_list.get(entity['index'] - 1).word}")
 
     def remove_accents(self, old: str):
         """

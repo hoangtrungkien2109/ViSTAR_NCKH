@@ -18,6 +18,7 @@ __pycache__/
 unit_test.py
 *_temp.py
 *copy.py
+test.*
 
 # Proto files
 streaming_pb2.py
