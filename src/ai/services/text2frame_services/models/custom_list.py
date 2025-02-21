@@ -10,6 +10,7 @@ class Word(BaseModel):
 
 class WordList(BaseModel):
     word_list: List[Word] = []
+    pointer: int = 0
 
     def get_len(self):
         return len(self.word_list)
