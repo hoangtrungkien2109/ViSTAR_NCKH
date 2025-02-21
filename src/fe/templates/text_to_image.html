@@ -1,4 +1,6 @@
-<!DOCTYPE html>
+{% extends "base.html" %}
+{% block title %}Login{% endblock %}
+{% block content %}
 <html>
 <head>
     <title>Real-time Text and Image Streaming</title>
@@ -15,6 +17,7 @@
             width: 100%;
             padding: 10px;
             margin-bottom: 10px;
+            border: 2px solid black;
         }
         #imageDisplay {
             width: 100%;
@@ -32,10 +35,10 @@
     <div class="container">
         <div class="input-area">
             <textarea id="textInput" rows="4" placeholder="Enter text to send..."></textarea>
-            <button onclick="sendText()">Send Text</button>
+            <button class="btn btn-primary block w-full max-w-xs mx-auto" onclick="sendText()">Send Text</button>
         </div>
         <div class="image-area">
-            <img id="imageDisplay" alt="Received image will appear here">
+            <img id="imageDisplay" alt="Received image will appear here" style="width: 480px; height: 720px; object-fit: contain;">
             <div id="status" class="status">Not connected</div>
         </div>
     </div>
@@ -47,19 +50,19 @@
 
         function connect() {
             ws = new WebSocket('ws://localhost:8000/ws');
-            
+
             ws.onopen = function() {
                 document.getElementById('status').textContent = 'Connected';
                 reconnectAttempts = 0;
             };
-            
+
             ws.onmessage = function(event) {
                 if (event.data.startsWith('data:image')) {
                     console.log("Show image");
                     document.getElementById('imageDisplay').src = event.data;
                 }
             };
-            
+
             ws.onclose = function() {
                 document.getElementById('status').textContent = 'Disconnected';
                 if (reconnectAttempts < maxReconnectAttempts) {
@@ -67,7 +70,7 @@
                     setTimeout(connect, 1000 * reconnectAttempts);
                 }
             };
-            
+
             ws.onerror = function(error) {
                 console.error('WebSocket error:', error);
                 document.getElementById('status').textContent = 'Error: ' + error;
@@ -90,3 +93,4 @@
     </script>
 </body>
 </html>
+{% endblock %}

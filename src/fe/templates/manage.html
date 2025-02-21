@@ -31,9 +31,8 @@
                                     <form action="/manage/edit/{{ row.id }}" method="get" class="inline">
                                         <button type="submit" class="btn btn-secondary">Edit</button>
                                     </form>
-                                    <form action="/manage/delete/{{ row.id }}" method="post" class="inline">
-                                        <button type="submit" 
-                                                class="btn btn-danger"
+                                    <form class="delete-form" action="/manage/delete/{{ row.id }}" method="post">
+                                        <button type="submit" class="btn btn-danger"
                                                 onclick="return confirm('Are you sure you want to delete this record?');">
                                             Delete
                                         </button>
@@ -48,4 +47,32 @@
         </div>
     </div>
 </div>
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    const deleteForms = document.querySelectorAll('.delete-form');
+    deleteForms.forEach(form => {
+      form.addEventListener('submit', async function(event) {
+        event.preventDefault();
+        try {
+          const response = await fetch(form.action, {
+            method: 'POST'
+          });
+          const data = await response.json();
+          console.log("Response from delete endpoint:", data);
+          if(data.status === "success"){
+            showToast("Xóa Dữ Liệu Thành Công!");
+            // Optionally, remove the corresponding table row or refresh the page.
+            form.closest('tr').remove();
+          } else {
+            showToast("Error: " + data.message);
+          }
+        } catch (error) {
+          console.error("Error during deletion:", error);
+          showToast("An error occurred.");
+        }
+      });
+    });
+  });
+</script>
+
 {% endblock %}
