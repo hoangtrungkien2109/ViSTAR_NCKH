@@ -14,7 +14,7 @@ _sym_db = _symbol_database.Default()
 
 
 
-DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x0fstreaming.proto\x12\x12streaming_services\"3\n\x0fPushTextRequest\x12\x0c\n\x04text\x18\x01 \x01(\t\x12\x12\n\ntime_stamp\x18\x02 \x01(\t\"*\n\x10PushTextResponse\x12\x16\n\x0erequest_status\x18\x01 \x01(\t\"$\n\x0ePopTextRequest\x12\x12\n\ntime_stamp\x18\x01 \x01(\t\"7\n\x0fPopTextResponse\x12\x0c\n\x04text\x18\x01 \x01(\t\x12\x16\n\x0erequest_status\x18\x02 \x01(\t\"\x1d\n\tMatrixRow\x12\x10\n\x08\x65lements\x18\x01 \x03(\x02\"5\n\x06Matrix\x12+\n\x04rows\x18\x01 \x03(\x0b\x32\x1d.streaming_services.MatrixRow\"8\n\nMatrixList\x12*\n\x06matrix\x18\x01 \x03(\x0b\x32\x1a.streaming_services.Matrix\"U\n\x10PushFrameRequest\x12-\n\x05\x66rame\x18\x01 \x01(\x0b\x32\x1e.streaming_services.MatrixList\x12\x12\n\ntime_stamp\x18\x02 \x01(\t\"+\n\x11PushFrameResponse\x12\x16\n\x0erequest_status\x18\x01 \x01(\t\"%\n\x0fPopFrameRequest\x12\x12\n\ntime_stamp\x18\x01 \x01(\t\"Y\n\x10PopFrameResponse\x12-\n\x05\x66rame\x18\x01 \x01(\x0b\x32\x1e.streaming_services.MatrixList\x12\x16\n\x0erequest_status\x18\x02 \x01(\t\"U\n\x10PushImageRequest\x12-\n\x05image\x18\x01 \x01(\x0b\x32\x1e.streaming_services.MatrixList\x12\x12\n\ntime_stamp\x18\x02 \x01(\t\"+\n\x11PushImageResponse\x12\x16\n\x0erequest_status\x18\x01 \x01(\t\"%\n\x0fPopImageRequest\x12\x12\n\ntime_stamp\x18\x01 \x01(\t\"Y\n\x10PopImageResponse\x12-\n\x05image\x18\x01 \x01(\x0b\x32\x1e.streaming_services.MatrixList\x12\x16\n\x0erequest_status\x18\x02 \x01(\t2\xaa\x04\n\tStreaming\x12W\n\x08PushText\x12#.streaming_services.PushTextRequest\x1a$.streaming_services.PushTextResponse\"\x00\x12V\n\x07PopText\x12\".streaming_services.PopTextRequest\x1a#.streaming_services.PopTextResponse\"\x00\x30\x01\x12Z\n\tPushFrame\x12$.streaming_services.PushFrameRequest\x1a%.streaming_services.PushFrameResponse\"\x00\x12Y\n\x08PopFrame\x12#.streaming_services.PopFrameRequest\x1a$.streaming_services.PopFrameResponse\"\x00\x30\x01\x12Z\n\tPushImage\x12$.streaming_services.PushImageRequest\x1a%.streaming_services.PushImageResponse\"\x00\x12Y\n\x08PopImage\x12#.streaming_services.PopImageRequest\x1a$.streaming_services.PopImageResponse\"\x00\x30\x01\x62\x06proto3')
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x0fstreaming.proto\x12\x12streaming_services\"3\n\x0fPushTextRequest\x12\x0c\n\x04text\x18\x01 \x01(\t\x12\x12\n\ntime_stamp\x18\x02 \x01(\t\"*\n\x10PushTextResponse\x12\x16\n\x0erequest_status\x18\x01 \x01(\t\"$\n\x0ePopTextRequest\x12\x12\n\ntime_stamp\x18\x01 \x01(\t\"7\n\x0fPopTextResponse\x12\x0c\n\x04text\x18\x01 \x01(\t\x12\x16\n\x0erequest_status\x18\x02 \x01(\t\"\x1d\n\tMatrixRow\x12\x10\n\x08\x65lements\x18\x01 \x03(\x02\"5\n\x06Matrix\x12+\n\x04rows\x18\x01 \x03(\x0b\x32\x1d.streaming_services.MatrixRow\"8\n\nMatrixList\x12*\n\x06matrix\x18\x01 \x03(\x0b\x32\x1a.streaming_services.Matrix\"U\n\x10PushFrameRequest\x12-\n\x05\x66rame\x18\x01 \x01(\x0b\x32\x1e.streaming_services.MatrixList\x12\x12\n\ntime_stamp\x18\x02 \x01(\t\"+\n\x11PushFrameResponse\x12\x16\n\x0erequest_status\x18\x01 \x01(\t\"%\n\x0fPopFrameRequest\x12\x12\n\ntime_stamp\x18\x01 \x01(\t\"Y\n\x10PopFrameResponse\x12-\n\x05\x66rame\x18\x01 \x01(\x0b\x32\x1e.streaming_services.MatrixList\x12\x16\n\x0erequest_status\x18\x02 \x01(\t\"5\n\x10PushImageRequest\x12\r\n\x05image\x18\x01 \x01(\x0c\x12\x12\n\ntime_stamp\x18\x02 \x01(\t\"+\n\x11PushImageResponse\x12\x16\n\x0erequest_status\x18\x01 \x01(\t\"%\n\x0fPopImageRequest\x12\x12\n\ntime_stamp\x18\x01 \x01(\t\"9\n\x10PopImageResponse\x12\r\n\x05image\x18\x01 \x01(\x0c\x12\x16\n\x0erequest_status\x18\x02 \x01(\t2\xaa\x04\n\tStreaming\x12W\n\x08PushText\x12#.streaming_services.PushTextRequest\x1a$.streaming_services.PushTextResponse\"\x00\x12V\n\x07PopText\x12\".streaming_services.PopTextRequest\x1a#.streaming_services.PopTextResponse\"\x00\x30\x01\x12Z\n\tPushFrame\x12$.streaming_services.PushFrameRequest\x1a%.streaming_services.PushFrameResponse\"\x00\x12Y\n\x08PopFrame\x12#.streaming_services.PopFrameRequest\x1a$.streaming_services.PopFrameResponse\"\x00\x30\x01\x12Z\n\tPushImage\x12$.streaming_services.PushImageRequest\x1a%.streaming_services.PushImageResponse\"\x00\x12Y\n\x08PopImage\x12#.streaming_services.PopImageRequest\x1a$.streaming_services.PopImageResponse\"\x00\x30\x01\x62\x06proto3')
 
 _globals = globals()
 _builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, _globals)
@@ -44,13 +44,13 @@ if _descriptor._USE_C_DESCRIPTORS == False:
   _globals['_POPFRAMERESPONSE']._serialized_start=546
   _globals['_POPFRAMERESPONSE']._serialized_end=635
   _globals['_PUSHIMAGEREQUEST']._serialized_start=637
-  _globals['_PUSHIMAGEREQUEST']._serialized_end=722
-  _globals['_PUSHIMAGERESPONSE']._serialized_start=724
-  _globals['_PUSHIMAGERESPONSE']._serialized_end=767
-  _globals['_POPIMAGEREQUEST']._serialized_start=769
-  _globals['_POPIMAGEREQUEST']._serialized_end=806
-  _globals['_POPIMAGERESPONSE']._serialized_start=808
-  _globals['_POPIMAGERESPONSE']._serialized_end=897
-  _globals['_STREAMING']._serialized_start=900
-  _globals['_STREAMING']._serialized_end=1454
+  _globals['_PUSHIMAGEREQUEST']._serialized_end=690
+  _globals['_PUSHIMAGERESPONSE']._serialized_start=692
+  _globals['_PUSHIMAGERESPONSE']._serialized_end=735
+  _globals['_POPIMAGEREQUEST']._serialized_start=737
+  _globals['_POPIMAGEREQUEST']._serialized_end=774
+  _globals['_POPIMAGERESPONSE']._serialized_start=776
+  _globals['_POPIMAGERESPONSE']._serialized_end=833
+  _globals['_STREAMING']._serialized_start=836
+  _globals['_STREAMING']._serialized_end=1390
 # @@protoc_insertion_point(module_scope)
