@@ -38,6 +38,10 @@
 </div>
 
 <script>
+      window.addEventListener('beforeunload', function() {
+        // Use navigator.sendBeacon for a reliable fire-and-forget request
+        navigator.sendBeacon('/stop_camera');
+    });
 document.addEventListener('DOMContentLoaded', function() {
   const startForm = document.getElementById('start-form');
   const stopForm = document.getElementById('stop-form');

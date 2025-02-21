@@ -78,12 +78,22 @@
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex justify-between h-16">
                 <div class="flex items-center">
-                    <a href="/" class="text-xl font-bold text-gray-800">ViSTAR</a>
+                  <a href="/">
+                    <img src="{{ url_for('static', path='css/VISTAR.webp') }}"
+                         alt="ViSTAR Logo"
+                         class="logo"
+                         style="width: 50px; height: 50px; border-radius: 50%; object-fit: cover;">
+                  </a>
                 </div>
                 <div class="flex items-center space-x-4">
-                    <a href="/data" class="text-gray-600 hover:text-gray-900">Data</a>
-                    <a href="/manage" class="text-gray-600 hover:text-gray-900">Manage</a>
-                    <a href="/login" class="text-gray-600 hover:text-gray-900">Login</a>
+                    <a href="/data" class="text-gray-600 hover:text-gray-900">Create Data</a>
+                    <a href="/manage" class="text-gray-600 hover:text-gray-900">Manage Data</a>
+                    {% if request.session.get('username') %}
+                        <span class="text-gray-600 hover:text-gray-900">Hi, {{ request.session.get('username') }}!</span>
+                        <a href="/logout" class="text-gray-600 hover:text-gray-900">Logout</a>
+                    {% else %}
+                        <a href="/login" class="text-gray-600 hover:text-gray-900">Login</a>
+                    {% endif %}
                 </div>
             </div>
         </div>
