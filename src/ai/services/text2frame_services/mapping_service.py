@@ -14,6 +14,7 @@ from loguru import logger
 from transformers import AutoTokenizer, AutoModelForTokenClassification
 from transformers import pipeline
 # from sentence_transformers import SentenceTransformer
+# from sentence_transformers import SentenceTransformer
 from src.ai.services.text2frame_services.elastic_service import ESEngine
 from src.ai.services.utils.decorator import processing_time
 import random
@@ -31,6 +32,7 @@ def remove_accents(old: str):
     new = re.sub(r'[ừứửữựưùúủũụ]', 'u', new)
     return new
 from src.ai.services.text2frame_services.models.custom_list import WordList, Word
+from src.ai.services.text2frame_services.models.custom_list import WordList, Word
 
 
 class SimilaritySentence():
@@ -42,6 +44,12 @@ class SimilaritySentence():
     #         cls._instance = super(SimilaritySentence, cls).__new__(cls, *args, **kwargs)
     #     return cls._instance
 
+    def __init__(self, 
+            default_dict_path: str = "D:/NCKH/Text_to_Sign/ViSTAR/src/ai/services/text2frame_services/data/character_dict.rar",
+            ner_model_name: str = "NlpHUST/ner-vietnamese-electra-base",
+            ner_min_length: int = 5,
+            ner_max_length: int = 20,
+        ):
     def __init__(self, 
             default_dict_path: str = "D:/NCKH/Text_to_Sign/ViSTAR/src/ai/services/text2frame_services/data/character_dict.rar",
             ner_model_name: str = "NlpHUST/ner-vietnamese-electra-base",
@@ -61,9 +69,21 @@ class SimilaritySentence():
         ner_model = AutoModelForTokenClassification.from_pretrained(ner_model_name)
         self.ner = pipeline("ner", model=ner_model, tokenizer=tokenizer,
                        device='cuda' if torch.cuda.is_available() else 'cpu')
+        self.word_queue: WordList = WordList()
+        # self.frame_queue: Queue = Queue()
+        self.ner_list: WordList = WordList()
+        self.ner_min_length = ner_min_length
+        self.ner_max_length = ner_max_length
+        # self.SPECIAL_TOKEN = "SPECIAL_TOKEN"
+
+        tokenizer = AutoTokenizer.from_pretrained(ner_model_name)
+        ner_model = AutoModelForTokenClassification.from_pretrained(ner_model_name)
+        self.ner = pipeline("ner", model=ner_model, tokenizer=tokenizer,
+                       device='cuda' if torch.cuda.is_available() else 'cpu')
         try:
             with open(default_dict_path, 'r') as f:
                 self.default_frame = json.load(f)
+                logger.info(f"Default character: {self.default_frame.keys()}")
                 logger.info(f"Default character: {self.default_frame.keys()}")
         except FileNotFoundError as e:
             raise e
@@ -83,9 +103,22 @@ class SimilaritySentence():
                 self.word_queue.put(self.ner_list.pop())
             # else:
             #     self.word_queue.put(self.ner_list.get())
+    def push_word(self, word: str) -> None:
+        self.ner_list.put(Word(word=word))
+        logger.debug(f"Len of word list: {self.ner_list.get_len()}")
+        logger.debug(f"Word list: {self.ner_list.get_raw_sentence()}")
+        if self.ner_list.get_len() > self.ner_min_length:
+            self._detect_name()
+            if self.ner_list.get_len() > self.ner_max_length:
+                self.word_queue.put(self.ner_list.pop())
+            # else:
+            #     self.word_queue.put(self.ner_list.get())
 
     @processing_time
+    @processing_time
     def get_frame(self) -> List[np.ndarray]:
+        if self.word_queue.get_len() > 0:
+            current_word = self.word_queue.pop().word
         if self.word_queue.get_len() > 0:
             current_word = self.word_queue.pop().word
             searched_result = self.es.search(word=current_word)
@@ -97,6 +130,7 @@ class SimilaritySentence():
             else:
                 return self.default_frame["default"]
         else:
+            logger.error("Default")
             logger.error("Default")
             return self.default_frame["default"]
 
