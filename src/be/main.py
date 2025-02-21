@@ -11,6 +11,14 @@ from fastapi.staticfiles import StaticFiles
 import numpy as np
 import cv2
 import mediapipe as mp
+import asyncio
+import base64
+from fastapi import FastAPI, WebSocket
+from fastapi.staticfiles import StaticFiles
+import grpc
+from src.fe.streaming_pb2 import PushTextRequest, PopImageRequest
+from src.fe.streaming_pb2_grpc import StreamingStub
+
 camera = cv2.VideoCapture(0)
 mp_holistic = mp.solutions.holistic # Holistic model
 mp_drawing = mp.solutions.drawing_utils # Drawing utilities
@@ -336,7 +344,7 @@ def delete_record(record_id: int, db: Session = Depends(get_db)):
     db.delete(data_record)
     db.commit()
 
-    return {"status": "success", "message": "Record deleted"}
+    return RedirectResponse(url="/manage", status_code=302)
 
 @app.get("/video_feed")
 def video_feed():
@@ -412,6 +420,36 @@ def capture_stop(db: Session = Depends(get_db)):
     captured_keypoints = []
 
     return {"status": "capturing stopped", "saved_file": filename, "word": current_word}
+
+def get_grpc_stub():
+    channel = grpc.insecure_channel('localhost:50051')
+    return StreamingStub(channel)
+
+@app.websocket("/ws")
+async def websocket_endpoint(websocket: WebSocket):
+    await websocket.accept()
+    stub = get_grpc_stub()
+
+    pop_image_response = stub.PopImage(PopImageRequest(time_stamp=""))
+
+    try:
+        while True:
+            # Receive text from the client
+            text = await websocket.receive_text()
+            # Push text to gRPC service
+            push_image_response = stub.PushText(PushTextRequest(text=text, time_stamp=""))
+            # Start receiving images
+            for response in pop_image_response:
+                if response.image:
+                    # Convert bytes to base64
+                    base64_image = base64.b64encode(response.image).decode('utf-8')
+                    print("Show image in fe")
+                    await websocket.send_text(f"data:image/jpeg;base64,{base64_image}")
+
+    except Exception as e:
+        print(f"Error: {e}")
+    finally:
+        await websocket.close()
 
 if __name__ == "__main__":
     import uvicorn
