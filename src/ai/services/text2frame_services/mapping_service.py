@@ -18,7 +18,7 @@ from transformers import pipeline
 from src.ai.services.text2frame_services.elastic_service import ESEngine
 from src.ai.services.utils.decorator import processing_time
 from src.ai.services.text2frame_services.models.custom_list import WordList, Word, Segment
-
+import random
 
 class SimilaritySentence():
     """Class for Elastic Search"""
@@ -96,14 +96,23 @@ class SimilaritySentence():
                     frames = self.es.decode_frame(searched_result[0]["_source"]["frame"])
                     self.has_default = False
                     return frames
-                elif not self.has_default:
+                # elif not self.has_default:
+                else:
                     logger.error("Word is not contained in DB")
                     self.has_default = True
-                    return self.default_frame["default"]
-        elif not self.has_default:
-            logger.error("Default")
+                    word = random.choice(["a", "b", "c", "d", "e", "g", "h"])
+                    logger.info(f"Searched: {word}")
+                    return self.default_frame[word]
+        # elif not self.has_default:
+        #     logger.error("Default")
+        #     self.has_default = True
+        #     return self.default_frame["default"]
+        else:
+            logger.error("Word is not contained in DB")
             self.has_default = True
-            return self.default_frame["default"]
+            word = random.choice(["a", "b", "c", "d", "e", "g", "h"])
+            logger.info(f"Searched: {word}")
+            return self.default_frame[word]
 
     @processing_time
     def _detect_name(self) -> None:
