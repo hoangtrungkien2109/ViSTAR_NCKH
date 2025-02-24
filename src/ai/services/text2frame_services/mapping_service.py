@@ -40,6 +40,7 @@ class SimilaritySentence():
         self.ner_list: WordList = WordList()
         self.ner_min_length = ner_min_length
         self.ner_max_length = ner_max_length
+        self.has_default = False
 
         tokenizer = AutoTokenizer.from_pretrained(ner_model_name)
         ner_model = AutoModelForTokenClassification.from_pretrained(ner_model_name)
@@ -58,8 +59,10 @@ class SimilaritySentence():
         return text
 
     def push_word(self, word: str) -> None:
+        old_length = self.ner_list.get_segment_len()
         self.ner_list.put(word=word)
         self.ner_list.tokenize_text()
+        new_length = self.ner_list.get_segment_len()
         logger.debug(f"Len of word list: {self.ner_list.get_segment_len()}")
         # logger.warning(f"Word raw list: {self.ner_list.special_word_list}")
         # logger.warning(f"Word segment list: {self.ner_list.segment_list}")
@@ -69,8 +72,9 @@ class SimilaritySentence():
             if self.ner_list.get_segment_len() > self.ner_max_length:
                 self.ner_list.pop()
                 self.ner_list.pointer -= 1
-            self.word_queue.append(self.ner_list.get(self.ner_list.pointer))
-            self.ner_list.pointer += 1
+            if old_length != new_length:
+                self.word_queue.append(self.ner_list.get(self.ner_list.pointer))
+                self.ner_list.pointer += 1
 
     @processing_time
     def get_frame(self) -> List[np.ndarray]:
@@ -78,20 +82,28 @@ class SimilaritySentence():
             current_word = self.word_queue.pop()
             if current_word.is_name == True:
                 logger.success("Sent a name (list of character) to streaming")
-                return [self.default_frame[character] for character in self.remove_accents(current_word.segment.replace(" ",""))]
+                frames = []
+                for character in self.remove_accents(current_word.segment.replace(" ","")):
+                    frames.extend(self.default_frame[character])
+                logger.error(np.shape(frames))
+                self.has_default = False
+                return frames
             else:
                 searched_result = self.es.search(word=current_word.segment)
                 logger.debug(f"CURRENT: {current_word.segment}")
                 if len(searched_result) > 0:
                     logger.success("Sent frame to streaming")
                     frames = self.es.decode_frame(searched_result[0]["_source"]["frame"])
-                    return [frames]
-                else:
+                    self.has_default = False
+                    return frames
+                elif not self.has_default:
                     logger.error("Word is not contained in DB")
-                    return [self.default_frame["default"]]
-        else:
+                    self.has_default = True
+                    return self.default_frame["default"]
+        elif not self.has_default:
             logger.error("Default")
-            return [self.default_frame["default"]]
+            self.has_default = True
+            return self.default_frame["default"]
 
     @processing_time
     def _detect_name(self) -> None:

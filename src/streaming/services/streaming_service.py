@@ -47,7 +47,7 @@ class StreamingBaseService(streaming_pb2_grpc.StreamingServicer):
                 yield streaming_pb2.PopTextResponse(request_status="Empty", text=None)
             else:
                 yield streaming_pb2.PopTextResponse(request_status="Success", text=self.text_queue.get())
-            time.sleep(2)
+            time.sleep(DELAY_TIME)
 
     def PushFrame(self, request, context):
         try:

@@ -24,7 +24,7 @@ def run():
                 logger.info("Processing text...")
 
             frames = ss.get_frame()
-            for sub_frames in frames:
+            if frames:
                 frame_matrix_list = streaming_pb2.MatrixList(
                     matrix=[
                         streaming_pb2.Matrix(
@@ -33,7 +33,7 @@ def run():
                                     elements=point
                                 ) for point in frame
                             ]
-                        ) for frame in sub_frames
+                        ) for frame in frames
                     ]
                 )
                 push_frame_response = stub.PushFrame(streaming_pb2.PushFrameRequest(frame=frame_matrix_list))

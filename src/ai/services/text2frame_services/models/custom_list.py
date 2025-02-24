@@ -75,24 +75,3 @@ class WordList(BaseModel):
                 self.special_word_list[total_word].segment_id = idx
                 sub_segment.pop(0)
                 total_word += 1
-
-        # old_list = self.word_list
-        # max_length = self.get_len()
-        # self.clear()
-        # current_id = 0
-        # for segment in segments:
-        #     if "_" in segment:
-        #         sub_words = segment.split("_")
-        #         not_name = True
-        #         logger.warning(f"Segment: {segment}")
-        #         for i in range(current_id, current_id + len(sub_words)):
-        #             if i<max_length and old_list[i].is_name:
-        #                 self.put(Word(word=" ".join(sub_words), is_name=True))
-        #                 not_name = False
-        #                 break
-        #         if not_name:
-        #             self.put(Word(word=" ".join(sub_words), is_name=False))
-        #         current_id += len(sub_words)
-        #     else:
-        #         self.put(Word(word=segment))
-        #         current_id += 1
