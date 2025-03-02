@@ -19,6 +19,9 @@ import grpc
 from src.fe.streaming_pb2 import PushTextRequest, PopImageRequest
 from src.fe.streaming_pb2_grpc import StreamingStub
 
+import speech_recognition as sr
+import time
+
 camera = cv2.VideoCapture(0)
 mp_holistic = mp.solutions.holistic # Holistic model
 mp_drawing = mp.solutions.drawing_utils # Drawing utilities
@@ -119,10 +122,10 @@ def home(request: Request):
     """ Public home page. """
     return templates.TemplateResponse("text_to_image.html", {"request": request})
 
-@app.get("/test", response_class=HTMLResponse)
-def test(request: Request):
-    """ Public home page. """
-    return templates.TemplateResponse("test.html", {"request": request})
+# @app.get("/test", response_class=HTMLResponse)
+# def test(request: Request):
+#     """ Public home page. """
+#     return templates.TemplateResponse("test.html", {"request": request})
 # -----------------------------
 # REGISTER
 # -----------------------------
@@ -572,6 +575,24 @@ async def websocket_endpoint(websocket: WebSocket):
         print(f"Error: {e}")
     finally:
         await websocket.close()
+
+
+def recognize_and_send():
+    recognizer = sr.Recognizer()
+    with sr.Microphone() as source:
+        recognizer.adjust_for_ambient_noise(source)  # Giảm nhiễu nền
+        while True:
+            try:
+                audio = recognizer.listen(source, timeout=5)  # Lắng nghe trong 5s
+                text = recognizer.recognize_google(audio, language="vi-VN")
+                words = text.split()
+                # channel = get_grpc_stub()
+                stub = get_grpc_stub
+                for word in words:
+                    status, timestamp = stub.push_text(stub, word)
+            except:
+                continue
+            time.sleep(1)
 
 if __name__ == "__main__":
     import uvicorn
