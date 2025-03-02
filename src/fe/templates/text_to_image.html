@@ -50,6 +50,31 @@
         }
         button:hover { background-color: #0056b3; }
         button:disabled { background-color: #cccccc; cursor: not-allowed; }
+
+
+
+        #micButton {
+            padding: 10px 20px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        #micButton:hover {
+            background-color: #45a049;
+        }
+
+        #micButton.active {
+            background-color: #ff4444;
+        }
+
+        #micButton:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
     </style>
 </head>
 <body>
@@ -57,6 +82,7 @@
         <div class="input-area">
             <textarea id="textInput" rows="4" placeholder="Enter text to send..." onkeypress="handleKeyPress(event)"></textarea>
             <button id="sendButton" onclick="sendText()">Send Text</button>
+            <button id="micButton" onclick="toggleMic()">🎤</button>
         </div>
         <div class="image-area">
             <canvas id="imageCanvas"></canvas>
@@ -206,6 +232,78 @@
             statusElement.className = 'status ' + type;
         }
 
+        let isListening = false;
+        let recognition = false;
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+
+        // Initialize speech recognition availability
+        if (!SpeechRecognition) {
+            micButton.disabled = true;
+            micButton.title = "Speech recognition not supported in your browser";
+        }
+
+        function toggleMic() {
+            if (!isListening) {
+                startListening();
+            } else {
+                stopListening();
+            }
+        }
+
+        function startListening() {
+            if (!SpeechRecognition) return;
+
+            recognition = new SpeechRecognition();
+            recognition.continuous = true;
+            recognition.interimResults = true;
+            recognition.lang = 'vi-VN';
+
+            recognition.onstart = () => {
+                isListening = true;
+                micButton.textContent = '⏹️';
+                micButton.classList.add('active');
+                updateStatus('Listening...', 'connected');
+            };
+
+            recognition.onresult = (event) => {
+                const results = event.results;
+                for (let i = event.resultIndex; i < results.length; i++) {
+                    const transcript = results[i][0].transcript.trim();
+                    if (transcript) {
+                        // Append to textarea and send individual words
+                        textInput.value += transcript + ' ';
+                        const words = transcript.split(/\s+/);
+                        words.forEach(word => sendWord(word));
+                    }
+                }
+            };
+
+            recognition.onerror = (event) => {
+                console.error('Speech recognition error:', event.error);
+                updateStatus('Recognition error: ' + event.error, 'error');
+                stopListening();
+            };
+
+            recognition.onend = stopListening;
+
+            recognition.start();
+        }
+
+        function stopListening() {
+            if (recognition) {
+                recognition.stop();
+            }
+            isListening = false;
+            micButton.textContent = '🎤';
+            micButton.classList.remove('active');
+            updateStatus('Connected', 'connected');
+        }
+
+        function updateStatus(message, type) {
+            statusElement.textContent = message;
+            statusElement.className = 'status ' + type;
+        }
+
         function connect() {
             updateStatus('Connecting...', 'connecting');
             sendButton.disabled = true;
@@ -250,6 +348,13 @@
             if (event.key === 'Enter' && !event.shiftKey) {
                 event.preventDefault();
                 sendText();
+            }
+        }
+
+
+        function sendWord(word) {
+            if (ws && ws.readyState === WebSocket.OPEN) {
+                ws.send(word);
             }
         }
 
