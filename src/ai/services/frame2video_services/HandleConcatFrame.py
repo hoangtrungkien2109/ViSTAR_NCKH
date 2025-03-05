@@ -1,6 +1,9 @@
 from collections import deque
 import numpy as np
 from loguru import logger
+from src.ai.services.frame2video_services.lstm_model import load_model, predict
+
+lstm_model = load_model("/Users/trHien/DoAnTotNghiep/ViSTAR/src/ai/services/frame2video_services/cut.pth")
 
 def concatenate_frame(prev_frame, post_frame, rest):
     """
@@ -8,15 +11,12 @@ def concatenate_frame(prev_frame, post_frame, rest):
     prev_frame: only frame (75,3) which is that last frame of a previous word
     post_frame: only frame (75,3) which is frist frame of post word
     """
-    prev_frame = np.array(prev_frame)
-    post_frame = np.array(post_frame)
-    
     if np.linalg.norm(prev_frame - post_frame) <= 1:
         middle = np.linspace(prev_frame, post_frame, num=5)
     elif np.linalg.norm(prev_frame - post_frame) <= 2:
-        middle = np.linspace(prev_frame, post_frame, num=10)
+        middle = np.linspace(prev_frame, post_frame, num=7)
     else:
-        middle = np.linspace(prev_frame, post_frame, num=15)
+        middle = np.linspace(prev_frame, post_frame, num=10)
     
     logger.info(f"{middle.shape} - {post_frame.shape}")
     concatenated_frame = np.concatenate((middle, [post_frame], rest),axis=0)
@@ -34,7 +34,11 @@ class HandleConcatFrame:
         push frame into queue with process progress
         """
         try:
+            frames = frames/1000
+            p = predict(lstm_model, frames)
+            frames = frames[p.flatten() == 1]
             if (self.processed_frame_queue[-1] is not None):
+                
                 prev_frame = self.processed_frame_queue[-1]
                 post_frame = frames[0]
                 
