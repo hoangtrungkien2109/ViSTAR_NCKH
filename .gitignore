@@ -20,8 +20,6 @@ unit_test.py
 *_temp.py
 *copy.py
 test.*
-scripts
-Makefile
 
 # Proto files
 streaming_pb2.py
