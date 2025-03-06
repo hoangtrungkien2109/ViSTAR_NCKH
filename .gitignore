@@ -7,7 +7,7 @@ ENV/
 .env
 
 # Data
-data/
+data*/
 *.csv
 *.json
 

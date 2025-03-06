@@ -2,6 +2,7 @@ import threading
 from queue import Queue
 from loguru import logger
 import os
+import time
 
 from dotenv import load_dotenv
 from grpc import StatusCode
@@ -69,6 +70,8 @@ class StreamingBaseService(streaming_pb2_grpc.StreamingServicer):
             raise GrpcException(status_code=StatusCode.INTERNAL, details=str(e)) from e
 
     def PopImage(self, request, context):
+        frame_count = 0
+        start_time = time.time()
         while True:
             if self.image_queue.empty():
                 yield streaming_pb2.PopImageResponse(request_status="Empty")
@@ -76,3 +79,11 @@ class StreamingBaseService(streaming_pb2_grpc.StreamingServicer):
                 image = self.image_queue.get()
                 logger.info("POP image")
                 yield streaming_pb2.PopImageResponse(request_status="Success", image=image)
+            # Measure FPS
+            frame_count += 1
+            elapsed_time = time.time() - start_time
+            if elapsed_time > 1:  # Calculate FPS every second
+                fps = frame_count / elapsed_time
+                logger.info(f"FPS: {fps:.2f}")
+                frame_count = 0
+                start_time = time.time()

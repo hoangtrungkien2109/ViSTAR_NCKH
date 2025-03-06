@@ -16,7 +16,7 @@ def pad_tensor(tensor, target_length=300):
         return tensor
 
 # Check if CUDA is available
-device = torch.device( "mps" if torch.cuda.is_available() else "cpu")
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 class LSTMModel(nn.Module):
     def __init__(self, input_size, hidden_size, num_layers, dropout=0.5):
@@ -51,7 +51,7 @@ def load_model(filename):
     # Initialize the model
     model = LSTMModel(input_size, hidden_size, num_layers, output_size).to(device)
     
-    checkpoint = torch.load(filename, map_location=device)
+    checkpoint = torch.load(filename, map_location=device, weights_only=True)
     model.load_state_dict(checkpoint['model_state_dict'])
     print(f"Model loaded from {filename}")
     model.eval()  # Set the model to evaluation mode
@@ -65,8 +65,7 @@ def predict(model, x):
     # Make prediction
     with torch.no_grad():
         output = model(x)
-        prediction = torch.sigmoid(output)
-        prediction = np.array(prediction)
+        prediction = torch.sigmoid(output).cpu().numpy()
         prediction = np.where(prediction > 0.8, 1, 0)
     prediction = prediction.reshape(300,1)
     return prediction[:l,:]

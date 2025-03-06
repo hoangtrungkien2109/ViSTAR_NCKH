@@ -125,7 +125,7 @@ class ESEngine():
         frame_chunks = []
         for file_name in file_names:
             try:
-                frame_chunks.append(np.load(data_path + f'/landmarks_{file_name}.npy').tolist())
+                frame_chunks.append((np.load(data_path + f'/landmarks_{file_name}.npy') * 1000).astype(np.int16).tolist())
             except FileNotFoundError:
                 logger.error(file_name)
         data = []
@@ -185,4 +185,5 @@ class ESEngine():
 
 if __name__ == "__main__":
     es: ESEngine = ESEngine()
+    es.upload_to_es()
     print(es.search("kiến"))
