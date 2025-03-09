@@ -13,6 +13,9 @@
             }
         }
     </script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
     <style type="text/tailwindcss">
         @layer components {
             .data-table {
@@ -112,6 +115,7 @@
             </div>
         {% endif %}
 
+
         {% block content %}{% endblock %}
     </main>
 
@@ -123,5 +127,22 @@
             </p>
         </div>
     </footer>
+    <!-- Toast notification container -->
+    <div id="toast" class="fixed top-4 left-4 bg-green-500 text-white px-4 py-2 rounded shadow-lg hidden z-50">
+      <span id="toast-message"></span>
+    </div>
+     <script>
+        // Function to show a toast message in the top-left corner.
+        function showToast(message) {
+          const toast = document.getElementById('toast');
+          const toastMessage = document.getElementById('toast-message');
+          toastMessage.textContent = message;
+          toast.classList.remove('hidden');
+          // Hide toast after 3 seconds.
+          setTimeout(() => {
+            toast.classList.add('hidden');
+          }, 3000);
+        }
+      </script>
 </body>
 </html>

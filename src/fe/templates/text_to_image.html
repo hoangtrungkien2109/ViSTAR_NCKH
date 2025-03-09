@@ -17,79 +17,378 @@
             width: 100%;
             padding: 10px;
             margin-bottom: 10px;
-            border: 2px solid black;
+            resize: vertical;
         }
         #imageDisplay {
             width: 100%;
             max-width: 640px;
             height: auto;
             border: 1px solid #ccc;
+            display: block;
+            margin: 0 auto;
         }
         .status {
             margin-top: 10px;
+            padding: 5px 10px;
+            border-radius: 4px;
+        }
+        .stats {
+            font-size: 12px;
             color: #666;
+            margin-top: 5px;
+        }
+        .status.connected { background-color: #d4edda; color: #155724; }
+        .status.disconnected { background-color: #f8d7da; color: #721c24; }
+        .status.connecting { background-color: #fff3cd; color: #856404; }
+        button {
+            padding: 8px 16px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        button:hover { background-color: #0056b3; }
+        button:disabled { background-color: #cccccc; cursor: not-allowed; }
+
+
+
+        #micButton {
+            padding: 10px 20px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        #micButton:hover {
+            background-color: #45a049;
+        }
+
+        #micButton.active {
+            background-color: #ff4444;
+        }
+
+        #micButton:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
         }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="input-area">
-            <textarea id="textInput" rows="4" placeholder="Enter text to send..."></textarea>
-            <button class="btn btn-primary block w-full max-w-xs mx-auto" onclick="sendText()">Send Text</button>
+            <textarea id="textInput" rows="4" placeholder="Enter text to send..." onkeypress="handleKeyPress(event)"></textarea>
+            <button id="sendButton" onclick="sendText()">Send Text</button>
+            <button id="micButton" onclick="toggleMic()">🎤</button>
         </div>
         <div class="image-area">
-            <img id="imageDisplay" alt="Received image will appear here" style="width: 480px; height: 720px; object-fit: contain;">
+            <canvas id="imageCanvas"></canvas>
             <div id="status" class="status">Not connected</div>
+            <div id="stats" class="stats"></div>
         </div>
     </div>
 
     <script>
+        class ImageStreamManager {
+            constructor() {
+                this.canvas = document.getElementById('imageCanvas');
+                this.ctx = this.canvas.getContext('2d');
+                this.statsElement = document.getElementById('stats');
+                this.frameCount = 0;
+                this.frameRate = 0;
+                this.lastFrameTime = Date.now();
+                this.currentBlob = null;
+                this.currentObjectURL = null;
+
+                // Set initial canvas size
+                this.canvas.width = 640;
+                this.canvas.height = 480;
+
+                // Stats update interval
+                setInterval(() => this.updateStats(), 1000);
+            }
+
+            async processImage(imageData) {
+                try {
+                    // Clean up previous resources
+                    this.cleanup();
+
+                    // Convert base64 to blob
+                    this.currentBlob = this.base64ToBlob(imageData);
+                    this.currentObjectURL = URL.createObjectURL(this.currentBlob);
+
+                    // Create temporary image for loading
+                    const img = new Image();
+
+                    await new Promise((resolve, reject) => {
+                        img.onload = () => {
+                            // Adjust canvas size if needed
+                            if (this.canvas.width !== img.width || this.canvas.height !== img.height) {
+                                this.canvas.width = img.width;
+                                this.canvas.height = img.height;
+                            }
+
+                            // Clear previous frame
+                            this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+
+                            // Draw new frame
+                            this.ctx.drawImage(img, 0, 0);
+
+                            // Update stats
+                            this.updateFrameStats();
+
+                            // Cleanup immediately after drawing
+                            URL.revokeObjectURL(this.currentObjectURL);
+                            this.currentObjectURL = null;
+                            resolve();
+                        };
+
+                        img.onerror = reject;
+                        img.src = this.currentObjectURL;
+                    });
+
+                } catch (error) {
+                    console.error('Error processing image:', error);
+                } finally {
+                    // Ensure cleanup happens even if there's an error
+                    this.cleanup();
+                }
+            }
+
+            cleanup() {
+                // Revoke any existing object URL
+                if (this.currentObjectURL) {
+                    URL.revokeObjectURL(this.currentObjectURL);
+                    this.currentObjectURL = null;
+                }
+
+                // Clear blob reference
+                this.currentBlob = null;
+
+                // Force garbage collection hint
+                if (window.gc) {
+                    window.gc();
+                }
+            }
+
+            base64ToBlob(base64Data) {
+                try {
+                    const parts = base64Data.split(';base64,');
+                    const contentType = parts[0].split(':')[1];
+                    const raw = window.atob(parts[1]);
+                    const rawLength = raw.length;
+                    const uInt8Array = new Uint8Array(rawLength);
+
+                    for (let i = 0; i < rawLength; ++i) {
+                        uInt8Array[i] = raw.charCodeAt(i);
+                    }
+
+                    return new Blob([uInt8Array], { type: contentType });
+                } catch (error) {
+                    console.error('Error converting base64 to blob:', error);
+                    return null;
+                }
+            }
+
+            updateFrameStats() {
+                this.frameCount++;
+                const now = Date.now();
+                const timeDiff = now - this.lastFrameTime;
+
+                if (timeDiff >= 1000) {
+                    this.frameRate = Math.round((this.frameCount * 1000) / timeDiff);
+                    this.frameCount = 0;
+                    this.lastFrameTime = now;
+                }
+            }
+
+            updateStats() {
+                const memory = window.performance?.memory?.usedJSHeapSize;
+                const memoryMB = memory ? Math.round(memory / (1024 * 1024)) : 'N/A';
+
+                this.statsElement.textContent =
+                    `FPS: ${this.frameRate} | Memory: ${memoryMB}MB`;
+            }
+
+            clear() {
+                this.cleanup();
+                this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+            }
+        }
+
         let ws;
         let reconnectAttempts = 0;
         const maxReconnectAttempts = 5;
+        const sendButton = document.getElementById('sendButton');
+        const statusElement = document.getElementById('status');
+        const textInput = document.getElementById('textInput');
+        const imageManager = new ImageStreamManager();
+
+        function updateStatus(message, type) {
+            statusElement.textContent = message;
+            statusElement.className = 'status ' + type;
+        }
+
+        let isListening = false;
+        let recognition = false;
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+
+        // Initialize speech recognition availability
+        if (!SpeechRecognition) {
+            micButton.disabled = true;
+            micButton.title = "Speech recognition not supported in your browser";
+        }
+
+        function toggleMic() {
+            if (!isListening) {
+                startListening();
+            } else {
+                stopListening();
+            }
+        }
+
+        function startListening() {
+            if (!SpeechRecognition) return;
+
+            recognition = new SpeechRecognition();
+            recognition.continuous = true;
+            recognition.interimResults = true;
+            recognition.lang = 'vi-VN';
+
+            recognition.onstart = () => {
+                isListening = true;
+                micButton.textContent = '⏹️';
+                micButton.classList.add('active');
+                updateStatus('Listening...', 'connected');
+            };
+
+            recognition.onresult = (event) => {
+                const results = event.results;
+                for (let i = event.resultIndex; i < results.length; i++) {
+                    const transcript = results[i][0].transcript.trim();
+                    if (transcript) {
+                        // Append to textarea and send individual words
+                        textInput.value += transcript + ' ';
+                        const words = transcript.split(/\s+/);
+                        words.forEach(word => sendWord(word));
+                    }
+                }
+            };
+
+            recognition.onerror = (event) => {
+                console.error('Speech recognition error:', event.error);
+                updateStatus('Recognition error: ' + event.error, 'error');
+                stopListening();
+            };
+
+            recognition.onend = stopListening;
+
+            recognition.start();
+        }
+
+        function stopListening() {
+            if (recognition) {
+                recognition.stop();
+            }
+            isListening = false;
+            micButton.textContent = '🎤';
+            micButton.classList.remove('active');
+            updateStatus('Connected', 'connected');
+        }
+
+        function updateStatus(message, type) {
+            statusElement.textContent = message;
+            statusElement.className = 'status ' + type;
+        }
 
         function connect() {
+            updateStatus('Connecting...', 'connecting');
+            sendButton.disabled = true;
+
             ws = new WebSocket('ws://localhost:8000/ws');
 
             ws.onopen = function() {
-                document.getElementById('status').textContent = 'Connected';
+                updateStatus('Connected', 'connected');
+                sendButton.disabled = false;
                 reconnectAttempts = 0;
             };
 
             ws.onmessage = function(event) {
                 if (event.data.startsWith('data:image')) {
-                    console.log("Show image");
-                    document.getElementById('imageDisplay').src = event.data;
+                    imageManager.processImage(event.data);
                 }
             };
 
             ws.onclose = function() {
-                document.getElementById('status').textContent = 'Disconnected';
+                updateStatus('Disconnected', 'disconnected');
+                sendButton.disabled = true;
+                imageManager.clear();
+
                 if (reconnectAttempts < maxReconnectAttempts) {
                     reconnectAttempts++;
-                    setTimeout(connect, 1000 * reconnectAttempts);
+                    const delay = Math.min(1000 * Math.pow(2, reconnectAttempts), 10000);
+                    updateStatus(`Reconnecting in ${delay/1000} seconds...`, 'connecting');
+                    setTimeout(connect, delay);
+                } else {
+                    updateStatus('Failed to connect after multiple attempts', 'disconnected');
                 }
             };
 
             ws.onerror = function(error) {
                 console.error('WebSocket error:', error);
-                document.getElementById('status').textContent = 'Error: ' + error;
+                updateStatus('Connection error', 'disconnected');
+                sendButton.disabled = true;
             };
         }
 
-        function sendText() {
-            const textInput = document.getElementById('textInput');
+        function handleKeyPress(event) {
+            if (event.key === 'Enter' && !event.shiftKey) {
+                event.preventDefault();
+                sendText();
+            }
+        }
+
+
+        function sendWord(word) {
             if (ws && ws.readyState === WebSocket.OPEN) {
-                ws.send(textInput.value);
-                textInput.value = '';
+                ws.send(word);
+            }
+        }
+
+        function sendText() {
+            if (ws && ws.readyState === WebSocket.OPEN) {
+                const text = textInput.value.trim();
+                if (text) {
+                    ws.send(text);
+                    textInput.value = '';
+                }
             } else {
-                document.getElementById('status').textContent = 'Not connected. Trying to reconnect...';
+                updateStatus('Not connected. Attempting to reconnect...', 'connecting');
                 connect();
             }
         }
 
         // Initial connection
         connect();
+
+        // Handle page visibility changes
+        document.addEventListener('visibilitychange', function() {
+            if (!document.hidden && (!ws || ws.readyState !== WebSocket.OPEN)) {
+                reconnectAttempts = 0;
+                connect();
+            }
+        });
+
+        // Clean up on page unload
+        window.addEventListener('beforeunload', function() {
+            imageManager.clear();
+            if (ws) {
+                ws.close();
+            }
+        });
     </script>
 </body>
 </html>

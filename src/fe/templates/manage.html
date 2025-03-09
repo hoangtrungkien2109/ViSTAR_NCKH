@@ -29,7 +29,9 @@
                             <td>
                                 <div class="flex justify-center space-x-2">
                                     <form action="/manage/edit/{{ row.id }}" method="get" class="inline">
-                                        <button type="submit" class="btn btn-secondary">Edit</button>
+                                        <button type="submit" class="btn btn-secondary">
+                                            Edit
+                                        </button>
                                     </form>
                                     <form class="delete-form" action="/manage/delete/{{ row.id }}" method="post">
                                         <button type="submit" class="btn btn-danger"
@@ -37,6 +39,11 @@
                                             Delete
                                         </button>
                                     </form>
+                                    {% if current_user.is_admin %}
+                                        <button type="button" class="btn btn-primary" onclick="loadReview(event, {{ row.id }})">
+                                            Review
+                                        </button>
+                                    {% endif %}
                                 </div>
                             </td>
                         </tr>
@@ -47,6 +54,16 @@
         </div>
     </div>
 </div>
+
+<!-- Single Modal Container (placed outside the loop) -->
+<div class="modal fade" id="reviewModal" tabindex="-1" role="dialog" aria-labelledby="reviewModalLabel" aria-hidden="true">
+  <div class="modal-dialog" role="document" style="max-width: 800px;">
+    <div class="modal-content" id="modalContent" >
+      <!-- Modal content will be injected here -->
+    </div>
+  </div>
+</div>
+
 <script>
   document.addEventListener('DOMContentLoaded', function() {
     const deleteForms = document.querySelectorAll('.delete-form');
@@ -73,6 +90,27 @@
       });
     });
   });
+
+      function closeModal() {
+          const modalEl = document.getElementById('reviewModal');
+          let modal = bootstrap.Modal.getInstance(modalEl);
+          if (!modal) {
+              modal = new bootstrap.Modal(modalEl);
+          }
+          modal.hide();
+      }
+    async function loadReview(event, recordId) {
+        event.preventDefault(); // Prevent default action
+        const response = await fetch(`/manage/review/${recordId}`, {method: 'POST'});
+        if (response.ok) {
+            const modalContent = await response.text();
+            document.getElementById('modalContent').innerHTML = modalContent;
+            $('#reviewModal').modal('show');
+        } else {
+            alert("Failed to load review.");
+        }
+    }
+
 </script>
 
 {% endblock %}

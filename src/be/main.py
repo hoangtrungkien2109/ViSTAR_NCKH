@@ -1,5 +1,5 @@
 from fastapi import FastAPI, Request, Form, Depends
-from fastapi.responses import HTMLResponse, RedirectResponse, StreamingResponse
+from fastapi.responses import HTMLResponse, RedirectResponse, StreamingResponse, FileResponse
 from fastapi.templating import Jinja2Templates
 import os
 from sqlalchemy import Column, Integer, String, create_engine, ForeignKey, LargeBinary
@@ -18,6 +18,9 @@ from fastapi.staticfiles import StaticFiles
 import grpc
 from src.fe.streaming_pb2 import PushTextRequest, PopImageRequest
 from src.fe.streaming_pb2_grpc import StreamingStub
+
+import speech_recognition as sr
+import time
 
 camera = cv2.VideoCapture(0)
 mp_holistic = mp.solutions.holistic # Holistic model
@@ -65,6 +68,32 @@ class User(Base):
     is_admin = Column(Integer, default=0)  # 0 = not admin, 1 = admin
 
 
+@app.on_event("startup")
+async def create_default_admin():
+    db = SessionLocal()
+    try:
+
+        admin_username = "admin"
+        admin_email = "admin@example.com"
+        admin_password = "123"
+
+        # Check if an admin with this username already exists.
+        admin = db.query(User).filter(User.username == admin_username).first()
+        if admin is None:
+            new_admin = User(
+                username=admin_username,
+                email=admin_email,
+                password_hash=get_password_hash(admin_password),
+                is_admin=1
+            )
+            db.add(new_admin)
+            db.commit()
+            print("Default admin account created.")
+        else:
+            print("Admin account already exists.")
+    finally:
+        db.close()
+
 class DataTable(Base):
     __tablename__ = "data_table"
     id = Column(Integer, primary_key=True, index=True)
@@ -93,6 +122,10 @@ def home(request: Request):
     """ Public home page. """
     return templates.TemplateResponse("text_to_image.html", {"request": request})
 
+# @app.get("/test", response_class=HTMLResponse)
+# def test(request: Request):
+#     """ Public home page. """
+#     return templates.TemplateResponse("test.html", {"request": request})
 # -----------------------------
 # REGISTER
 # -----------------------------
@@ -219,14 +252,29 @@ def mediapipe_detection(image, model):
     image.flags.writeable = True
     image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
     return image, results
+frame_idx = 0
+def extract_keypoints(results,idx):
+    frame_data = np.zeros((75, 3))
+    if results.pose_landmarks:
+        for idx, lm in enumerate(results.pose_landmarks.landmark):
+            frame_data[idx] = [lm.x, lm.y, lm.z]
 
-def extract_keypoints(results):
-    pose = np.array([[res.x, res.y, res.z, res.visibility] for res in results.pose_landmarks.landmark]).flatten() if results.pose_landmarks else np.zeros(33*4)
-    face = np.array([[res.x, res.y, res.z] for res in results.face_landmarks.landmark]).flatten() if results.face_landmarks else np.zeros(468*3)
-    lh = np.array([[res.x, res.y, res.z] for res in results.left_hand_landmarks.landmark]).flatten() if results.left_hand_landmarks else np.zeros(21*3)
-    rh = np.array([[res.x, res.y, res.z] for res in results.right_hand_landmarks.landmark]).flatten() if results.right_hand_landmarks else np.zeros(21*3)
-    return np.concatenate([pose, face, lh, rh])
+        # Check for right hand landmarks and append only if they exist
+    if results.right_hand_landmarks:
+        for idx, lm in enumerate(results.right_hand_landmarks.landmark):
+            frame_data[33 + idx] = [lm.x, lm.y, lm.z]  # Right hand starts after 33 pose landmarks
+    else:
+        frame_data[33:33 + 21] = 0  # Mark absent hand landmarks with 0
+
+        # Check for left hand landmarks and append only if they exist
+    if results.left_hand_landmarks:
+        for idx, lm in enumerate(results.left_hand_landmarks.landmark):
+            frame_data[33 + 21 + idx] = [lm.x, lm.y, lm.z]  # Left hand starts after 33 pose + 21 right hand landmarks
+    else:
+        frame_data[33 + 21:33 + 42] = 0
+    return frame_data
 def gen_frames():
+    global frame_idx
     """
     Generator function that:
       1. Captures frames from the webcam.
@@ -234,17 +282,18 @@ def gen_frames():
       3. Draws the landmarks onto the frame.
       4. Encodes the frame as JPEG and yields it for streaming.
     """
-    with mp_holistic.Holistic(min_detection_confidence=0.1, min_tracking_confidence=0.1) as holistic:
+    with mp_holistic.Holistic(min_detection_confidence=0.5, min_tracking_confidence=0.5) as holistic:
         while True:
             success, frame = camera.read()
-            if not success:
-                # If there's an issue grabbing a frame, you could yield a blank or break
+            if not success or frame is None:
+
                 break
 
             image, results = mediapipe_detection(frame, holistic)
             draw_styled_landmarks(image, results)
             if capturing:
-                keypoints = extract_keypoints(results)
+                frame_idx += 1
+                keypoints = extract_keypoints(results,frame_idx)
                 captured_keypoints.append(keypoints)
 
             # Encode the frame as JPEG
@@ -275,15 +324,89 @@ def manage_page(request: Request, db: Session = Depends(get_db)):
 
     # Query data_table for the current user
     user_data = db.query(DataTable).filter(DataTable.user_id == current_user_id).all()
-
+    current_user = {"is_admin": True}
     # Render the manage.html template, passing the user's data
     return templates.TemplateResponse(
         "manage.html",
         {
             "request": request,
+            "current_user": current_user,
             "data_rows": user_data
         }
     )
+
+
+def visualize_landmarks_to_video(array, output_filename='output.webm',
+                                 target_height=480, target_width=720,
+                                 fps=30):
+    # Check that the array has shape (num_frames, 75, 3)
+    if array.ndim != 3 or array.shape[1:] != (75, 3):
+        raise ValueError(f"Expected shape (N,75,3), got {array.shape}")
+
+    # Use VP8 codec for WebM output
+    fourcc = cv2.VideoWriter_fourcc(*'VP80')
+    out = cv2.VideoWriter(output_filename, fourcc, fps, (target_width, target_height))
+
+    # Loop through each frame and draw landmarks.
+    for frame in array:
+        # Create a blank image.
+        img = np.zeros((target_height, target_width, 3), dtype=np.uint8)
+        # Scale landmark coordinates to image dimensions.
+        points = (frame[:, :2] * [target_width, target_height]).astype(np.int32)
+        for point in points:
+            cv2.circle(img, tuple(point), 1, (0, 255, 0), -1)
+        out.write(img)
+
+    out.release()
+    print(f"Video saved to {output_filename}")
+    return output_filename
+
+
+@app.post("/manage/review/{record_id}", response_class=HTMLResponse)
+def review_record(record_id: int, db: Session = Depends(get_db)):
+    # Query the database for the record.
+    record = db.query(DataTable).filter(DataTable.id == record_id).first()
+    if not record:
+        return HTMLResponse(content="Record not found", status_code=404)
+    keypoints_array = np.frombuffer(record.numpy_array, dtype=np.float64)
+    n_frames = keypoints_array.size // (75 * 3)
+    try:
+        keypoints_array = keypoints_array.reshape((n_frames, 75, 3))
+    except Exception as e:
+        return HTMLResponse(content=f"Error reshaping array: {e}", status_code=500)
+
+    # Generate a video from the array.
+    # This function writes the video file to disk.
+    video_filename = f"review_{record_id}.webm"
+    visualize_landmarks_to_video(keypoints_array, output_filename=video_filename)
+
+    # Return the modal HTML snippet.
+    modal_html = f"""
+    <div class="modal-header" style="background-color: #196e90">
+        <h2 class="modal-title f-f-Lato-Heavy" style="color:#ffc767" id="exampleModalLabel">
+            Review for Record: {record.word}
+        </h2>
+    </div>
+    <div class="modal-body">
+        <iframe id="s_expert" src="/video/{video_filename}?autoplay=true" width="100%" height="500px" frameborder="0"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen>
+        </iframe>
+    </div>
+    <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal" onclick="closeModal()">Đóng</button>
+    </div>
+    """
+    print("Returning modal HTML for record", record_id)
+    return HTMLResponse(content=modal_html)
+
+
+@app.get("/video/{video_filename}")
+def get_video(video_filename: str):
+    """
+    Serve the generated video file.
+    """
+    return FileResponse(video_filename, media_type="video/webm")
+
 
 @app.get("/manage/edit/{record_id}", response_class=HTMLResponse)
 def edit_page(record_id: int, request: Request, db: Session = Depends(get_db)):
@@ -293,9 +416,9 @@ def edit_page(record_id: int, request: Request, db: Session = Depends(get_db)):
     data_record = db.query(DataTable).filter_by(id=record_id).first()
     if not data_record:
         return {"error": "Record not found"}
-
+    current_user = {"is_admin": True}
     # Check if user owns it or is admin
-    if data_record.user_id != current_user_id and not current_is_admin:
+    if data_record.user_id != current_user_id and not current_user:
         return {"error": "Not authorized to edit this record"}
 
     # Render a template with a form
@@ -307,8 +430,6 @@ def edit_page(record_id: int, request: Request, db: Session = Depends(get_db)):
             "existing_word": data_record.word
         }
     )
-
-
 @app.post("/manage/edit/{record_id}", response_class=HTMLResponse)
 def edit_record_post(record_id: int, request: Request, db: Session = Depends(get_db), word: str = Form(...)):
     if current_user_id is None:
@@ -317,15 +438,14 @@ def edit_record_post(record_id: int, request: Request, db: Session = Depends(get
     data_record = db.query(DataTable).filter_by(id=record_id).first()
     if not data_record:
         return {"error": "Record not found"}
-
+    current_user = {"is_admin": True}
     # Check if user owns it or is admin
-    if data_record.user_id != current_user_id and not current_is_admin:
+    if data_record.user_id != current_user_id and not current_user:
         return {"error": "Not authorized to edit this record"}
 
     # Update the word field
     data_record.word = word
     db.commit()
-
     return RedirectResponse(url="/manage", status_code=302)
 
 @app.post("/manage/delete/{record_id}")
@@ -336,9 +456,9 @@ def delete_record(record_id: int, db: Session = Depends(get_db)):
     data_record = db.query(DataTable).filter_by(id=record_id).first()
     if not data_record:
         return {"error": "Record not found"}
-
+    current_user = {"is_admin": True}
     # Check if user owns it or is admin
-    if data_record.user_id != current_user_id and not current_is_admin:
+    if data_record.user_id != current_user_id and not current_user:
         return {"error": "Not authorized to delete this record"}
 
     db.delete(data_record)
@@ -355,7 +475,12 @@ def stop_camera():
     if camera.isOpened():
         camera.release()
     return {"status": "Camera stopped"}
-
+@app.post("/start_camera")
+def start_camera():
+    global camera
+    if not camera.isOpened():
+        camera = cv2.VideoCapture(0)
+    return {"status": "Camera started"}
 @app.post("/capture/start")
 def capture_start(    request: Request,
     word: str = Form(...),
@@ -450,6 +575,24 @@ async def websocket_endpoint(websocket: WebSocket):
         print(f"Error: {e}")
     finally:
         await websocket.close()
+
+
+def recognize_and_send():
+    recognizer = sr.Recognizer()
+    with sr.Microphone() as source:
+        recognizer.adjust_for_ambient_noise(source)  # Giảm nhiễu nền
+        while True:
+            try:
+                audio = recognizer.listen(source, timeout=5)  # Lắng nghe trong 5s
+                text = recognizer.recognize_google(audio, language="vi-VN")
+                words = text.split()
+                # channel = get_grpc_stub()
+                stub = get_grpc_stub
+                for word in words:
+                    status, timestamp = stub.push_text(stub, word)
+            except:
+                continue
+            time.sleep(1)
 
 if __name__ == "__main__":
     import uvicorn
