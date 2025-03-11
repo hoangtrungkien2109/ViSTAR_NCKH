@@ -94,8 +94,14 @@ def visualize_landmarks_minimal(array, target_height=480, target_width=720, line
     return encoded_img.tobytes()
 
 def send_image_into_streaming(stub, handle_concat_frame: HandleConcatFrame):
-    while True:
+    mem = None
+    while True:       
         data = handle_concat_frame.pop()
+        
+        if is_similar_frame(frame1=mem, frame2=data) and handle_concat_frame.getLen() > 100:
+            continue
+        else:
+            pass
         if data is not None:
             try:
                 # Encode numpy array to image bytes
@@ -106,6 +112,15 @@ def send_image_into_streaming(stub, handle_concat_frame: HandleConcatFrame):
                 logger.success(len(handle_concat_frame.processed_frame_queue))
             except Exception as e:
                 logger.error(f"Error sending image: {str(e)}")
+            mem = data
+        else:
+            mem = None
+
+def is_similar_frame(frame1, frame2, threshold=0.1):
+    if frame1 is None or frame2 is None:
+        return False
+    distance = np.linalg.norm(frame1 - frame2)
+    return distance < threshold
 
 def run():
     with grpc.insecure_channel("localhost:50051") as channel:

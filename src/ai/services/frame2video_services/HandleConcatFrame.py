@@ -62,3 +62,6 @@ class HandleConcatFrame:
             return a
         except IndexError:
             return None
+        
+    def getLen(self):
+        return len(self.processed_frame_queue)
