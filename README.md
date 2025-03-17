@@ -19,7 +19,7 @@
   <br>
 </div>
 
-![ViSTAR Logo](src/fe/static/css/VISTAR.webp)
+![ViSTAR Logo](src/VISTAR.webp)
 A comprehensive system for real-time sign language translation using AI and computer vision. ViSTAR enables bidirectional translation between text and sign language through video frames.
 
 ## 🌟 Features
