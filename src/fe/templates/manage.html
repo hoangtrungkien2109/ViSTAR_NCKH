@@ -1,0 +1,116 @@
+{% extends "base.html" %}
+{% block title %}Manage My Data{% endblock %}
+{% block content %}
+<div class="max-w-6xl mx-auto">
+    <div class="card">
+        <div class="card-header flex justify-between items-center">
+            <h2 class="text-xl font-bold">Manage My Data</h2>
+            <a href="/data" class="btn btn-primary">Capture New Data</a>
+        </div>
+        <div class="card-body">
+            <p class="text-gray-600 mb-4">Below is a list of your captured data. You can edit or delete if you own it or are admin.</p>
+
+            <div class="overflow-x-auto">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Word</th>
+                            <th>NPY File</th>
+                            <th class="text-center">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for row in data_rows %}
+                        <tr>
+                            <td>{{ row.id }}</td>
+                            <td>{{ row.word }}</td>
+                            <td>{{ row.npy_file }}</td>
+                            <td>
+                                <div class="flex justify-center space-x-2">
+                                    <form action="/manage/edit/{{ row.id }}" method="get" class="inline">
+                                        <button type="submit" class="btn btn-secondary">
+                                            Edit
+                                        </button>
+                                    </form>
+                                    <form class="delete-form" action="/manage/delete/{{ row.id }}" method="post">
+                                        <button type="submit" class="btn btn-danger"
+                                                onclick="return confirm('Are you sure you want to delete this record?');">
+                                            Delete
+                                        </button>
+                                    </form>
+                                    {% if current_user.is_admin %}
+                                        <button type="button" class="btn btn-primary" onclick="loadReview(event, {{ row.id }})">
+                                            Review
+                                        </button>
+                                    {% endif %}
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Single Modal Container (placed outside the loop) -->
+<div class="modal fade" id="reviewModal" tabindex="-1" role="dialog" aria-labelledby="reviewModalLabel" aria-hidden="true">
+  <div class="modal-dialog" role="document" style="max-width: 800px;">
+    <div class="modal-content" id="modalContent" >
+      <!-- Modal content will be injected here -->
+    </div>
+  </div>
+</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    const deleteForms = document.querySelectorAll('.delete-form');
+    deleteForms.forEach(form => {
+      form.addEventListener('submit', async function(event) {
+        event.preventDefault();
+        try {
+          const response = await fetch(form.action, {
+            method: 'POST'
+          });
+          const data = await response.json();
+          console.log("Response from delete endpoint:", data);
+          if(data.status === "success"){
+            showToast("Xóa Dữ Liệu Thành Công!");
+            // Optionally, remove the corresponding table row or refresh the page.
+            form.closest('tr').remove();
+          } else {
+            showToast("Error: " + data.message);
+          }
+        } catch (error) {
+          console.error("Error during deletion:", error);
+          showToast("An error occurred.");
+        }
+      });
+    });
+  });
+
+      function closeModal() {
+          const modalEl = document.getElementById('reviewModal');
+          let modal = bootstrap.Modal.getInstance(modalEl);
+          if (!modal) {
+              modal = new bootstrap.Modal(modalEl);
+          }
+          modal.hide();
+      }
+    async function loadReview(event, recordId) {
+        event.preventDefault(); // Prevent default action
+        const response = await fetch(`/manage/review/${recordId}`, {method: 'POST'});
+        if (response.ok) {
+            const modalContent = await response.text();
+            document.getElementById('modalContent').innerHTML = modalContent;
+            $('#reviewModal').modal('show');
+        } else {
+            alert("Failed to load review.");
+        }
+    }
+
+</script>
+
+{% endblock %}
